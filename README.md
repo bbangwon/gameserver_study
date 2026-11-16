@@ -30,4 +30,36 @@ VS Code의 기본 빌드 태스크가 설정되어 있습니다.
 
 ---
 
+## 🐘 데이터베이스 (PostgreSQL)
+
+DB 연동 예제는 **PostgreSQL**을 사용하며, 프로젝트 루트의 `docker-compose.yml`을 통해 컨테이너로 실행할 수 있습니다.
+
+### 1. 실행 및 종료
+
+```bash
+# PostgreSQL 컨테이너 백그라운드 실행
+docker compose up -d
+
+# 컨테이너 중지 및 제거 (데이터는 ./data 디렉토리에 유지됨)
+docker compose down
+```
+
+### 2. 접속 정보
+
+| 항목 | 값 |
+| :--- | :--- |
+| **Host** | `localhost` |
+| **Port** | `5432` |
+| **User** | `postgres` |
+| **Password** | `postgres` |
+| **Database** | `mydb` |
+
+### 3. 컨테이너 내부 `psql` 접속
+
+```bash
+docker compose exec db psql -U postgres -d mydb
+```
+
+---
+
 > **참고**: 컴파일된 바이너리 및 실행 파일(`.out`, `.exe` 등)은 Git 추적에서 제외(`.gitignore`)됩니다.

@@ -10,7 +10,9 @@
 
 #include "session.h"
 #include "packet.h"
+#include "thr_act.h"
 #include "queue.h"
+#include "svr.h"
 
 #define _G_TCP_PORT 9901
 #define _G_UDP_PORT 8801
@@ -28,7 +30,6 @@ typedef struct sockPair {
 
 void * Thread_recvpack(void *arg);
 void * Thread_sendpack(void *arg);
-void * Thread_sync(void *arg);
 void * Thread_udpserv(void *arg);
 
 void setup_signals();
@@ -40,8 +41,9 @@ type_queue  * send_que=NULL;
 int signal_sock_no	= 0;
 
 pthread_mutex_t synclock = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t	sendQuecond	= PTHREAD_COND_INITIALIZER;
+pthread_cond_t	synccond	= PTHREAD_COND_INITIALIZER;
 pthread_mutex_t sendQuelock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t	sendQuecond	= PTHREAD_COND_INITIALIZER;
 
 int queue_get_length(type_queue const * const *q);
 type_packet *queue_pull_packet(type_queue **q);
@@ -411,11 +413,6 @@ void * Thread_sendpack(void *arg)
             }
         }
     }
-}
-
-void * Thread_sync(void *arg)
-{
-
 }
 
 void * Thread_udpserv(void *arg)

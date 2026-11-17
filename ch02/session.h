@@ -24,8 +24,26 @@ typedef struct connection {
     short userStat; //유저 상태
     short roomNo; // default:0                                                              
     short Ax; //현재 위치 x좌표
-    short Ay; //현재 위치 y좌표
-    short Bx; //이전 위치 X좌표
-    short By; //이전 위치 Y좌표
+    short Az; //현재 위치 z좌표
+    short Bx; //이전 위치 x좌표
+    short Bz; //이전 위치 z좌표
     type_conn_state state; //클라이언트 상태
 } type_session;
+
+ typedef struct connArray {
+    type_session s;
+    int sockNo;
+    char flag; //0: not use, 1: use
+ } t_sessionArray;
+
+#define MAXUSERNUM 	0x1000
+
+void init_t_sessionArray();
+void reset_sessionArray(int idx);
+
+type_session* ret_session(int idx);
+type_session* ret_session_first(unsigned int max);
+type_session* ret_session_next(unsigned int max);
+type_session* session_create(int sock, unsigned int addr, unsigned short port);
+void session_clear(type_session  * c);
+int session_set_userid(type_session *c, char *msg, int len);

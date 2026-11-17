@@ -31,7 +31,6 @@ void * Thread_sendpack(void *arg);
 void * Thread_sync(void *arg);
 void * Thread_udpserv(void *arg);
 
-void init_t_sessionArray();
 void setup_signals();
 
 int tUsercnt = 0;
@@ -44,10 +43,6 @@ pthread_mutex_t synclock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t	sendQuecond	= PTHREAD_COND_INITIALIZER;
 pthread_mutex_t sendQuelock = PTHREAD_MUTEX_INITIALIZER;
 
-type_session *ret_session_first2(int idx);
-type_session *ret_session_next2(int idx);
-type_session *session_create(int sock, unsigned long ip, unsigned short port);
-void session_clear(type_session *c);
 int queue_get_length(type_queue const * const *q);
 type_packet *queue_pull_packet(type_queue **q);
 void packet_destroy(type_packet *packet);
@@ -185,7 +180,7 @@ void * Thread_recvpack(void *arg)
         FD_ZERO(&efds);
         highest_fd = tcpsock;
         FD_SET(tcpsock, &rfds); // FD_SET : fdset 중 소켓 fd에 해당하는 비트 설정
-        for(nc=ret_session_first2(tUsercnt); nc; nc=ret_session_next2(tUsercnt))
+        for(nc=ret_session_first(tUsercnt); nc; nc=ret_session_next(tUsercnt))
         {
             csocket = nc->sock;
             FD_SET(csocket, &rfds);
@@ -243,7 +238,7 @@ void * Thread_recvpack(void *arg)
         }
 
         // 세션 상태 확인 및 정리
-        for(c=ret_session_first2(tUsercnt); c; c=ret_session_next2(tUsercnt))
+        for(c=ret_session_first(tUsercnt); c; c=ret_session_next(tUsercnt))
         {
             if(c->state == conn_state_destroy)
             {
@@ -428,35 +423,11 @@ void * Thread_udpserv(void *arg)
 
 }
 
-void init_t_sessionArray()
-{
-
-}
-
 void setup_signals()
 {
 
 }
 
-type_session *ret_session_first2(int idx)
-{
-    return NULL;
-}
-
-type_session *ret_session_next2(int idx)
-{
-    return NULL;
-}
-
-type_session *session_create(int sock, unsigned long ip, unsigned short port)
-{
-    return NULL;
-}
-
-void session_clear(type_session *c)
-{
-
-}
 
 int thr_beforeAuth(char *data, type_session *c, PGconn *conn, int udpSock) 
 { 

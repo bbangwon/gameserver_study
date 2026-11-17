@@ -49,7 +49,7 @@
  typedef struct queues {
     type_packet *packet;
     struct queues *next;
- } type_queues;
+ } type_queue;
 
  // 맵에서 섹터에 들어오는 유저의 정보를 연결리스트로  만든 자료구조
  typedef struct objlist {

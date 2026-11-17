@@ -9,6 +9,8 @@
 #include <errno.h>
 
 #include "session.h"
+#include "packet.h"
+#include "queue.h"
 
 #define _G_TCP_PORT 9901
 #define _G_UDP_PORT 8801
@@ -34,12 +36,22 @@ void setup_signals();
 
 int tUsercnt = 0;
 
+type_queue  * send_que=NULL;
+
+int signal_sock_no	= 0;
+
 pthread_mutex_t synclock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t	sendQuecond	= PTHREAD_COND_INITIALIZER;
+pthread_mutex_t sendQuelock = PTHREAD_MUTEX_INITIALIZER;
 
 type_session *ret_session_first2(int idx);
 type_session *ret_session_next2(int idx);
 type_session *session_create(int sock, unsigned long ip, unsigned short port);
 void session_clear(type_session *c);
+int queue_get_length(type_queue const * const *q);
+type_packet *queue_pull_packet(type_queue **q);
+void packet_destroy(type_packet *packet);
+
 
 int thr_beforeAuth(char *data, type_session *c, PGconn *conn, int udpSock);
 int main_act(unsigned char *msg, short psize, type_session *c, PGconn *conn, int udpSock);
@@ -341,7 +353,69 @@ void * Thread_recvpack(void *arg)
 
 void * Thread_sendpack(void *arg)
 {
+    int i, j, ERRkey;
+    int rets, tmp_sock;
+    type_packet *packet;
+    type_session *c;
+    type_session *ERRmap[16];
+    type_session *tmp;
+    int que_len;
 
+    for(i=0;i<16;i++)
+        ERRmap[i] = NULL;
+
+    for(;;) {
+        ERRkey = 0;
+        pthread_mutex_lock(&sendQuelock);
+        que_len = queue_get_length((type_queue const * const *)&send_que);
+        while(que_len == 0) { //큐의 길이가 0인 동안 데이터가 들어올 때까지 기다린다.
+            pthread_cond_wait(&sendQuecond, &sendQuelock);
+            que_len = queue_get_length((type_queue const * const *)&send_que);
+        }
+        packet = queue_pull_packet(&send_que); //큐에서 노드를 가져옴
+        i = 0;
+        while(i < que_len) {  // 큐에 들어온 데이터를 모두 전송할 때까지 루프를 돈다.
+            i+=1;
+
+            c = (type_session *)packet->session; //큐의 구조체에 있는 수신자의 연결 정보를 가져옴
+            tmp_sock = c->sock;
+
+            if(!packet->session) { //연결 정보가 NULL일 경우
+                printf("세션이 널.............\n");
+                packet_destroy(packet);
+                if(i<que_len) packet = queue_pull_packet(&send_que); //보내지 않은 노드를 가져옴
+            } else if(tmp_sock == 2) {
+                printf("sigpipe 발생................\n");
+                packet_destroy(packet);
+                if(i < que_len) packet = queue_pull_packet(&send_que);
+            } else {
+                if(packet->size < 5){
+                    printf("Send error 패킷 길이가 5보다 작다...%d\n", packet->data[2]);
+                    rets = send(packet->cli_sock, packet->data, packet->size, 0);   //송신
+                    if(rets <= 0){
+                        printf("Send errorss\n", rets);
+                        ERRmap[ERRkey] = c;
+                        ERRkey++;
+                    }
+                }
+                packet_destroy(packet);
+                if(i < que_len) packet = queue_pull_packet(&send_que); 
+                pthread_mutex_unlock(&sendQuelock);
+
+                if(ERRkey != 0){ //송신중 오류가 발생한 클라이언트 처리
+                    pthread_mutex_lock(&synclock);
+                    for(j=0; j<ERRkey;j++) {
+                        ERRmap[j]->sock = signal_sock_no;
+                        ERRmap[j]->state = conn_state_destroy;
+                        tmp=ERRmap[j];
+                        ERRmap[j] = NULL;
+                    }
+                    pthread_mutex_unlock(&synclock);
+                }
+
+            }
+        }
+    }
 }
 
 void * Thread_sync(void *arg)
@@ -392,4 +466,18 @@ int thr_beforeAuth(char *data, type_session *c, PGconn *conn, int udpSock)
 int main_act(unsigned char *msg, short psize, type_session *c, PGconn *conn, int udpSock) 
 { 
     return 0; 
+}
+
+int queue_get_length(type_queue const * const *q)
+{
+    return 0;
+}
+
+type_packet *queue_pull_packet(type_queue **q)
+{
+    return NULL;
+}
+
+void packet_destroy(type_packet *packet){
+
 }

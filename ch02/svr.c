@@ -11,7 +11,7 @@
 #include "session.h"
 #include "packet.h"
 #include "thr_act.h"
-#include "queue.h"
+#include "que.h"
 #include "svr.h"
 
 #define _G_TCP_PORT 9901
@@ -40,11 +40,6 @@ pthread_mutex_t synclock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t	synccond	= PTHREAD_COND_INITIALIZER;
 pthread_mutex_t sendQuelock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t	sendQuecond	= PTHREAD_COND_INITIALIZER;
-
-int queue_get_length(type_queue const * const *q);
-type_packet *queue_pull_packet(type_queue **q);
-void packet_destroy(type_packet *packet);
-
 
 int main() {
     int tcpsock, udpsock, tresult;
@@ -417,16 +412,3 @@ void setup_signals()
 
 }
 
-int queue_get_length(type_queue const * const *q)
-{
-    return 0;
-}
-
-type_packet *queue_pull_packet(type_queue **q)
-{
-    return NULL;
-}
-
-void packet_destroy(type_packet *packet){
-
-}

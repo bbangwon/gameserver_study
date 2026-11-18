@@ -19,3 +19,6 @@ enum {
     char data[MAX_PACKET_SIZE];
     void *session;
  } type_packet;
+
+ type_packet *packet_create();
+ void packet_destroy(type_packet *packet);

@@ -18,10 +18,6 @@
 #define _G_UDP_PORT 8801
 
 #define LISTEN_QUEUE 0x0A
-#define MAX_PACKET_SIZE 0x400
-
-/*packet end marker*/
-#define PEND 0xC8D1
 
 typedef struct sockPair {
     int tcpSock;
@@ -50,7 +46,6 @@ type_packet *queue_pull_packet(type_queue **q);
 void packet_destroy(type_packet *packet);
 
 
-int thr_beforeAuth(char *data, type_session *c, PGconn *conn, int udpSock);
 int main_act(unsigned char *msg, short psize, type_session *c, PGconn *conn, int udpSock);
 
 
@@ -423,12 +418,6 @@ void * Thread_udpserv(void *arg)
 void setup_signals()
 {
 
-}
-
-
-int thr_beforeAuth(char *data, type_session *c, PGconn *conn, int udpSock) 
-{ 
-    return 0; 
 }
 
 int main_act(unsigned char *msg, short psize, type_session *c, PGconn *conn, int udpSock) 

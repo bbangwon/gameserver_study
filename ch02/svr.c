@@ -46,9 +46,6 @@ type_packet *queue_pull_packet(type_queue **q);
 void packet_destroy(type_packet *packet);
 
 
-int main_act(unsigned char *msg, short psize, type_session *c, PGconn *conn, int udpSock);
-
-
 int main() {
     int tcpsock, udpsock, tresult;
     struct sockaddr_in laddr, udservaddr;
@@ -418,11 +415,6 @@ void * Thread_udpserv(void *arg)
 void setup_signals()
 {
 
-}
-
-int main_act(unsigned char *msg, short psize, type_session *c, PGconn *conn, int udpSock) 
-{ 
-    return 0; 
 }
 
 int queue_get_length(type_queue const * const *q)

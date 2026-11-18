@@ -11,6 +11,12 @@
 #define _ONE_SEC	GAME_FRAME
 #define AFRAME	900000/GAME_FRAME
 
+/*map size*/
+#define S_WIDTH  		32
+
+#define RET_TRUE 0
+#define RET_FALSE 1
+
 int svr_ret_tot() {
     return 0;
 }
@@ -29,6 +35,9 @@ void map_pData_snd(type_session *c, char *mesg, int pLen) {
 }
 
 void map_usersend_All(int Ax, int Az, char *mesg, int pLen, type_session *exclude) {
+}
+
+void map_char_one_mv(type_session *c, int Ax, int Az) {
 }
 
 // 유저의 움직임, 자동 저장, 체력 회보ㄱ, 공격 시간 텀등 자동적으로 적용되는 캐릭터의 카운트와 관련된 일을 처리한다.
@@ -114,41 +123,196 @@ extern int thr_beforeAuth(char *dat, type_session *c, void *conn, int udpsock) {
                     //map_sec_test();   //테스트
                     mesg[pLen] = PK_USER_AUTH; //응답 패킷 헤더 설정
                     pLen += 1;
+
                     mesg[pLen] = svr_ret_tot();
                     pLen += 1;
+
                     mesg[pLen]=c->uLen;
                     pLen += 1;
                     memcpy(&mesg[pLen], &c->userid[0], c->uLen);
                     pLen += c->uLen;
+
                     memcpy(&mesg[pLen], &c->userNo, 2);
                     pLen += 2;
+
                     memcpy(&mesg[pLen], &nEnd, 2);
                     pLen += 2;
-                    memcpy(&mesg[pLen], &pLen, 2);
+                    
+                    memcpy(&mesg[0], &pLen, 2);
                     map_pData_snd(c, mesg, pLen);  //클라이언트에 응답 패킷 전송
 
                     pLen=2;
                     mesg[pLen] = PK_USER_INFO;
                     pLen+=1;
+
                     memcpy(&mesg[pLen], &c->userNo, 2);
                     pLen+=2;
+                    
                     mesg[pLen] = c->uLen; //6
                     pLen+=1;
                     memcpy(&mesg[pLen], &c->userid[0], c->uLen); //8
                     pLen+=c->uLen;
+
                     mesg[pLen] = c->Ax;
                     pLen+=1;
+
                     mesg[pLen] = c->Az;
                     pLen+=1;
+
                     memcpy(&mesg[pLen], &nEnd, 2);
                     pLen+=2;
-                    memcpy(&mesg[pLen], &pLen, 2);
+
+                    memcpy(&mesg[0], &pLen, 2);
                     map_usersend_All(c->Ax, c->Az, mesg, pLen, NULL);  //근처 유저에게 전송
                 } else {
                     return 0;
                 }
                 break;
         }
+    }
+    return 1;
+}
+
+// 메인 액션 처리 함수
+extern int main_act(char *dat, short pLen, type_session *c, void *conn, int udpsock) {
+    int rLen=2, res;
+    char mesg[MAX_PACKET_SIZE];
+    unsigned short nEnd = PEND;
+    unsigned short Ax, Az, headercd;
+    short tx,tz,cLen;
+
+    // if(dat[2] < 0) headercd=dat[2]+256; // 음수일 경우 256을 더해 양수로 변환
+    headercd =dat[2];
+    switch(headercd) {
+        case PK_USER_CHAT:
+            memcpy(&cLen, &dat[3], 2);
+            if(cLen>pLen-4)
+                return 0;
+
+            mesg[rLen] = PK_USER_CHAT;
+            rLen+=1;
+
+            mesg[rLen]=c->uLen;
+            rLen+=1;
+            memcpy(&mesg[rLen], &c->userid[0], c->uLen);
+            rLen+=c->uLen;
+
+            memcpy(&mesg[rLen], &cLen, 2);
+            rLen+=2;
+            memcpy(&mesg[rLen], &dat[5], cLen);
+            rLen+=cLen;
+
+            memcpy(&mesg[rLen], &nEnd, 2);
+            rLen+=2;
+
+            memcpy(&mesg[0], &rLen, 2);
+            map_usersend_All(c->Ax, c->Az, mesg, rLen, NULL);
+            printf("PK_USER_CHAT:ok\n");
+            break;
+        case PK_REQ_LOC:
+            mesg[rLen] = PK_REQ_LOC;
+            rLen+=1;
+
+            mesg[rLen] = c->Ax;
+            rLen+=1;
+
+            mesg[rLen] = c->Az;
+            rLen+=1;
+
+            memcpy(&mesg[rLen], &nEnd, 2);
+            rLen+=2;
+
+            memcpy(&mesg[0], &rLen, 2);
+            map_pData_snd(c, mesg, rLen);
+            printf("PK_REQ_LOC:ok\n");
+            break;
+        case PK_CMD_MV: //섹터 이동 패킷
+            Ax=dat[3];
+            Az=dat[4];
+            if(Ax>=S_WIDTH||Az>=S_WIDTH)
+                return 0;
+            tx = c->Ax - Ax;
+            tz = c->Az - Az;
+            if(tx>1||tx<-1||tz>1||tz<-1||(c->Ax==Ax && c->Az==Az))
+                res = 0;
+            else
+                res = 1;
+            printf("before:%d %d after:%d %d res:%d\n", c->Ax, c->Az, Ax, Az, res);
+
+            if(res==1){
+                printf("PK_CMD_MV:TRUE\n");
+                mesg[rLen] = PK_USER_MV; //2
+                rLen+=1;
+
+                mesg[rLen] = RET_TRUE;
+                rLen+=1;
+
+                memcpy(&mesg[rLen], &c->userNo, 2); // 8
+                rLen+=2;
+
+                mesg[rLen] = c->uLen;
+                rLen+=1;
+
+                memcpy(&mesg[rLen], &c->userid[0], c->uLen);
+                rLen+=c->uLen;
+
+                mesg[rLen] = Ax;
+                rLen+=1;
+
+                mesg[rLen] = Az;
+                rLen+=1;
+
+                mesg[rLen] = c->Ax;
+                rLen+=1;
+
+                mesg[rLen] = c->Az;
+                rLen+=1;
+
+                memcpy(&mesg[rLen], &nEnd, 2);
+                rLen+=2;
+
+                memcpy(&mesg[0], &rLen, 2);
+                map_usersend_All(c->Ax, c->Az, mesg, rLen, NULL);
+                map_char_one_mv(c,Ax,Az); //섹터 이동
+
+                c->Bx = c->Ax;
+                c->Bz = c->Az;
+            } else {
+                mesg[rLen] = PK_USER_MV;
+                rLen+=1;
+
+                mesg[rLen] = RET_FALSE;
+                rLen+=1;
+
+                memcpy(&mesg[rLen], &c->userNo, 2);
+                rLen+=2;
+
+                mesg[rLen] = c->uLen;
+                rLen+=1;
+
+                memcpy(&mesg[rLen], &c->userid[0], c->uLen);
+                rLen+=c->uLen;
+
+                mesg[rLen] = c->Ax;
+                rLen+=1;
+
+                mesg[rLen] = c->Az;
+                rLen+=1;
+
+                mesg[rLen] = Ax;
+                rLen+=1;
+
+                mesg[rLen] = Az;
+                rLen+=1;
+
+                memcpy(&mesg[rLen], &nEnd, 2);
+                rLen+=2;
+                memcpy(&mesg[0], &rLen, 2);
+                map_usersend_All(c->Ax, c->Az, mesg, rLen, NULL);
+            }
+            break;
+        default:
+            return 0;
     }
     return 1;
 }

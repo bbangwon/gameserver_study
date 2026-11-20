@@ -9,7 +9,8 @@ enum {
    PK_USER_AUTH,
    PK_USER_CHAT=10,PK_USER_INFO,
    PK_REQ_LOC=20,
-   PK_CMD_MV=30,PK_USER_MV
+   PK_CMD_MV=30,PK_USER_MV,
+   PK_USER_DISCON=90
 };
 
  //클라이언트에 보내질 패킷의 형

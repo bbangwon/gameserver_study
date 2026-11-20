@@ -23,9 +23,6 @@ int db_user_auth(char *name, char *pass, int clen, void *conn) {
 void conn_set_userid(type_session *c, char *name, int ulen) {
 }
 
-void map_pData_snd(type_session *c, char *mesg, int pLen) {
-}
-
 // 유저의 움직임, 자동 저장, 체력 회보ㄱ, 공격 시간 텀등 자동적으로 적용되는 캐릭터의 카운트와 관련된 일을 처리한다.
 void * Thread_sync(void *arg) {
     struct timeval start, stop;

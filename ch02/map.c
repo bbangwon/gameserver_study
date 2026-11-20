@@ -163,10 +163,166 @@ extern void map_usersend_All(unsigned short mapSizeX, unsigned short mapSizeZ, c
 
 }
 
+//옮기기 전의 섹터와 새로 옮긴 섹터의 방향 정보를 알아내어 방향에 따라 새로 적용되는 섹터로 해당 유저의 동작 패킷을 보내준다.
 void map_bk_sectorinfo(type_session *c){
+    int x,z;
+    int ax,az,i;
+    short dLen=2;
+    char udata[128];
+    unsigned short nEnd = PEND;
+
+    memset(udata, 0, sizeof(udata));
+    udata[dLen] = PK_USER_MV;   //2
+    dLen+=1;
+
+    udata[dLen] = RET_TRUE;
+    dLen+=1;
+
+    memcpy(&udata[dLen], &c->userNo, 2);
+    dLen+=2;
+
+    udata[dLen] = c->uLen;
+    dLen+=1;
+
+    memcpy(&udata[dLen], &c->userid[0], c->uLen);
+    dLen+=c->uLen;
+
+    udata[dLen] = c->Ax;
+    dLen+=1;
+
+    udata[dLen] = c->Az;
+    dLen+=1;
+
+    udata[dLen] = c->Bx;
+    dLen+=1;
+
+    udata[dLen] = c->Bz;
+    dLen+=1;
+
+    memcpy(&udata[dLen], &nEnd, 2);
+    dLen+=2;
+
+    memcpy(&udata[0], &dLen, 2);
+
+    x = c->Bx - c->Ax;
+    z = c->Bz - c->Az;
+
+    if(x==0 && z<0) { //12시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            az = c->Az +1;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }        
+    } else if(x<0 && z<0) { // 1시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            az = c->Az +1;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+
+        for (i=0;i<2;i++) {
+            ax = c->Ax +1;
+            az = c->Az -i;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+    } else if(x<0 && z==0) { //3시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax +1;
+            az = c->Az -i+2;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+    } else if(x<0 && z>0) { //4시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            az = c->Az -1;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+
+        for(i=0;i<2;i++) {
+            ax = c->Ax +1;
+            az = c->Az +i;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+    } else if(x==0 && z>0) { // 6시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            az = c->Az -1;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+    } else if(x>0 && z>0) { // 7시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            az = c->Az -1;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+        for(i=0;i<2;i++) {
+            ax = c->Ax -1;
+            az = c->Az -i;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+    } else if(x>0 && z==0) { // 9시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -1;
+            az = c->Az -i+2;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+    } else if(x>0 && z<0) { // 10시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            az = c->Az +1;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+
+        for(i=0;i<2;i++) {
+            ax = c->Ax -1;
+            az = c->Az -i;
+
+            if(ax>=0 && ax<S_WIDTH && az>=0 && az<S_WIDTH) {
+                map_secdata_snd(ax, az, udata, dLen);
+            } else continue;
+        }
+    }
 
 }
 
 void map_get_sectorinfo(type_session *c){
 
+}
+
+void map_secdata_snd(unsigned short x, unsigned short z, char *udata, int dLen)
+{
+    
 }

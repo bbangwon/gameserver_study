@@ -12,9 +12,6 @@
 #define _ONE_SEC	GAME_FRAME
 #define AFRAME	900000/GAME_FRAME
 
-#define RET_TRUE 0
-#define RET_FALSE 1
-
 int svr_ret_tot() {
     return 0;
 }

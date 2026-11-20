@@ -16,3 +16,4 @@ int map_char_one_mv(type_session *c, unsigned short x, unsigned short z);
 void map_bk_sectorinfo(type_session *c);
 void map_get_sectorinfo(type_session *c);
 void map_usersend_All(unsigned short mapSizeX, unsigned short mapSizeZ, char *retdata, int len, type_session *c);
+void map_secdata_snd(unsigned short x, unsigned short z, char *udata, int dLen);

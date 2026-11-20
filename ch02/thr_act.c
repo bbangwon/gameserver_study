@@ -3,16 +3,14 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <pthread.h>
-#include "svr.h"
 #include "packet.h"
 #include "thr_act.h"
+#include "map.h"
+#include "publicInc.h"
 
 #define GAME_FRAME 	0x0F
 #define _ONE_SEC	GAME_FRAME
 #define AFRAME	900000/GAME_FRAME
-
-/*map size*/
-#define S_WIDTH  		32
 
 #define RET_TRUE 0
 #define RET_FALSE 1
@@ -28,16 +26,7 @@ int db_user_auth(char *name, char *pass, int clen, void *conn) {
 void conn_set_userid(type_session *c, char *name, int ulen) {
 }
 
-void mapinit(type_session *c) {
-}
-
 void map_pData_snd(type_session *c, char *mesg, int pLen) {
-}
-
-void map_usersend_All(int Ax, int Az, char *mesg, int pLen, type_session *exclude) {
-}
-
-void map_char_one_mv(type_session *c, int Ax, int Az) {
 }
 
 // 유저의 움직임, 자동 저장, 체력 회보ㄱ, 공격 시간 텀등 자동적으로 적용되는 캐릭터의 카운트와 관련된 일을 처리한다.

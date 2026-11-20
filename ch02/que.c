@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include "que.h"
 
+type_queue  *send_que=NULL;
+
 // 큐에서 패킷을 꺼냄
 extern type_packet *queue_pull_packet(type_queue **queue)
 {
@@ -22,7 +24,7 @@ extern type_packet *queue_pull_packet(type_queue **queue)
 }
 
 // 큐에 새로운 패킷을 추가
-extern void queue_push_packet_new(type_queue **queue, type_packet *packet) {
+extern void queue_push_packet_raw(type_queue **queue, type_packet *packet) {
     type_queue *temp;
 
     if(!queue)

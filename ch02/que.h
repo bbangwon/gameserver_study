@@ -8,6 +8,8 @@
     struct queues *next;
  } type_queue;
 
+ extern type_queue           *send_que;
+
  type_packet* queue_pull_packet(type_queue **queue);
- void queue_push_packet_new(type_queue **queue, type_packet *packet);
+ void queue_push_packet_raw(type_queue **queue, type_packet *packet);
  int queue_get_length(type_queue const * const * queue);

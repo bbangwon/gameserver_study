@@ -32,8 +32,6 @@ void setup_signals();
 
 int tUsercnt = 0;
 
-type_queue  * send_que=NULL;
-
 int signal_sock_no	= 0;
 
 pthread_mutex_t synclock = PTHREAD_MUTEX_INITIALIZER;

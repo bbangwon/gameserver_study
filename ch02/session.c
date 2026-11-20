@@ -2,17 +2,15 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <string.h>
+#include "map.h"
 #include "session.h"
+
 
 static t_sessionArray sess_array[MAXUSERNUM];
 static volatile int sockTosess[MAXUSERNUM];
 
 static int ar_idx;
 static int ar_cnt;
-
-void map_char_rm(type_session *c) {
-    
-}
 
 //유저의 연결 정보 배열을 초기화한다.
 extern void init_t_sessionArray()

@@ -9,10 +9,10 @@
 #include <errno.h>
 
 #include "session.h"
-#include "packet.h"
 #include "thr_act.h"
 #include "que.h"
 #include "svr.h"
+#include "publicInc.h"
 
 #define _G_TCP_PORT 9901
 #define _G_UDP_PORT 8801

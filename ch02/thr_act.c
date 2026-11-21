@@ -17,9 +17,6 @@ int svr_ret_tot() {
     return 0;
 }
 
-void conn_set_userid(type_session *c, char *name, int ulen) {
-}
-
 // 유저의 움직임, 자동 저장, 체력 회보ㄱ, 공격 시간 텀등 자동적으로 적용되는 캐릭터의 카운트와 관련된 일을 처리한다.
 void * Thread_sync(void *arg) {
     struct timeval start, stop;
@@ -97,7 +94,7 @@ extern int thr_beforeAuth(char *dat, type_session *c, void *conn, int udpsock) {
                 printf("유저인증 결과 : %d %s\n", res, name);
 
                 if(res == 1) { //인증 성공
-                    conn_set_userid(c, name, ulen); //유저 아이디 저장
+                    session_set_userid(c, name, ulen); //유저 아이디 저장
                     mapinit(c); //맵에 초기화
                     c->state = conn_state_authed; //인증 상태로 변경
                     //map_sec_test();   //테스트

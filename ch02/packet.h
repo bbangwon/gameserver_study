@@ -2,9 +2,6 @@
  
  #define MAX_PACKET_SIZE 0x400
 
- /*packet end marker*/
-#define PEND 0xC8D1
-
 enum {
    PK_USER_AUTH,
    PK_USER_CHAT=10,PK_USER_INFO,

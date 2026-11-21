@@ -6,6 +6,9 @@
 #define RET_TRUE 0
 #define RET_FALSE 1
 
+/*packet end marker*/
+#define PEND 0xC8D1
+
 extern pthread_mutex_t 		synclock;
 extern pthread_cond_t		synccond;
 extern pthread_mutex_t      sendQuelock;

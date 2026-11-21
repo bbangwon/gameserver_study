@@ -6,6 +6,7 @@
 #include "packet.h"
 #include "thr_act.h"
 #include "map.h"
+#include "db.h"
 #include "publicInc.h"
 
 #define GAME_FRAME 	0x0F
@@ -13,10 +14,6 @@
 #define AFRAME	900000/GAME_FRAME
 
 int svr_ret_tot() {
-    return 0;
-}
-
-int db_user_auth(char *name, char *pass, int clen, void *conn) {
     return 0;
 }
 

@@ -36,8 +36,6 @@ typedef struct connection {
     char flag; //0: not use, 1: use
  } t_sessionArray;
 
-#define MAXUSERNUM 	0x1000
-
 void init_t_sessionArray();
 void reset_sessionArray(int idx);
 

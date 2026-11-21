@@ -14,11 +14,6 @@
 #include "svr.h"
 #include "publicInc.h"
 
-#define _G_TCP_PORT 9901
-#define _G_UDP_PORT 8801
-
-#define LISTEN_QUEUE 0x0A
-
 typedef struct sockPair {
     int tcpSock;
     int udpSock;

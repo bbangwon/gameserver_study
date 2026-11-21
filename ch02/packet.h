@@ -1,16 +1,8 @@
  #pragma once
+
+ #include "publicInc.h"
  
- #define MAX_PACKET_SIZE 0x400
-
-enum {
-   PK_USER_AUTH,
-   PK_USER_CHAT=10,PK_USER_INFO,
-   PK_REQ_LOC=20,
-   PK_CMD_MV=30,PK_USER_MV,
-   PK_USER_DISCON=90
-};
-
- //클라이언트에 보내질 패킷의 형
+  //클라이언트에 보내질 패킷의 형
  typedef struct packet {
     int cli_sock;
     int size;

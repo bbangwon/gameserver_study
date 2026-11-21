@@ -3,15 +3,11 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <pthread.h>
-#include "packet.h"
 #include "thr_act.h"
 #include "map.h"
 #include "db.h"
 #include "publicInc.h"
 
-#define GAME_FRAME 	0x0F
-#define _ONE_SEC	GAME_FRAME
-#define AFRAME	900000/GAME_FRAME
 
 int svr_ret_tot() {
     return 0;

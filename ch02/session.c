@@ -4,6 +4,7 @@
 #include <string.h>
 #include "map.h"
 #include "session.h"
+#include "publicInc.h"
 
 
 static t_sessionArray sess_array[MAXUSERNUM];

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -g -lpq
-SRCS = svr.c item.c db.c npc.c
+SRCS = svr.c item.c db.c npc.c skill.c
 TARGET = svr
 
 $(TARGET): $(SRCS)

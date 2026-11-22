@@ -5,6 +5,7 @@
 #include "db.h"
 #include "item.h"
 #include "npc.h"
+#include "skill.h"
 #include "publicInc.h"
 
 static int exp_list[MAXUSERLEVEL+1];
@@ -138,4 +139,47 @@ extern void db_load_expList(void *con)
     }
     printf("EXP 총 %d 개 로드됨\n", rows);
     PQclear(result);
+}
+
+extern void db_load_skillList(void *con)
+{
+    int sktype, coin, skidx, i;
+    char *lvpwr, *lvupcost;
+    PGconn *conn;
+    PGresult *result;
+    char query[256];
+    int rows;
+
+
+    conn = (PGconn *)con;
+    item_init();
+    memset(query, 0, 256);
+    sprintf(query, "SELECT * FROM skilldef");
+
+    result = PQexec((PGconn *)conn, query);
+    if(PQresultStatus(result) != PGRES_TUPLES_OK) {
+        printf("db_load_skillList:%s\n", PQerrorMessage((PGconn *)conn));
+        PQclear(result);
+        return;
+    }
+
+    rows = PQntuples(result);
+    if(rows == 0) {
+        printf("db no skill list found0\n");
+        PQclear(result);
+        return;
+    }
+
+    for(i = 0; i < rows; i++) {
+        sktype = atoi(PQgetvalue(result, i, 0));
+        skidx = atoi(PQgetvalue(result, i, 1));
+        coin = atoi(PQgetvalue(result, i, 2));
+        lvpwr = PQgetvalue(result, i, 3);
+        lvupcost = PQgetvalue(result, i, 4);
+        skill_defset(sktype, skidx, lvpwr, lvupcost, coin);
+    }
+    printf("Skill 총 %d 개 로드됨\n", rows);
+    PQclear(result);
+
+
 }

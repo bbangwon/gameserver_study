@@ -5,11 +5,14 @@
 #include "db.h"
 #include "item.h"
 #include "npc.h"
+#include "publicInc.h"
+
+static int exp_list[MAXUSERLEVEL+1];
 
 // 아이템 리스트를 데이터베이스에서 로드하는 함수
 extern void db_load_itemList(void *con)
 {
-    int i, state, cnt = 0;
+    int i;
     PGconn *conn;
     PGresult *result;
 
@@ -58,7 +61,6 @@ extern void db_load_itemList(void *con)
 
 extern void db_load_npcList(void *con)
 {
-    int state;
     PGconn *conn;
     PGresult *result;
 
@@ -97,5 +99,43 @@ extern void db_load_npcList(void *con)
         else
             printf("MONSTER load no:%d gtpye:%d ;eve;:%d speed:%d\n", no, gtype, level, speed);
     }
+    printf("NPC 총 %d 개 로드됨\n", rows);
+    PQclear(result);
+}
+
+extern void db_load_expList(void *con)
+{
+    int lv;
+
+    PGconn *conn;
+    PGresult *result;
+    char query[256];
+    int rows;
+
+    conn = (PGconn *)con;
+    item_init();
+    memset(query, 0, 256);
+    sprintf(query, "SELECT * FROM exp ORDER BY lv ASC");
+
+    result = PQexec((PGconn *)conn, query);
+    if(PQresultStatus(result) != PGRES_TUPLES_OK) {
+        printf("db_load_expList:%s\n", PQerrorMessage((PGconn *)conn));
+        PQclear(result);
+        return;
+    }
+
+    rows = PQntuples(result);
+    if(rows == 0) {
+        printf("db no exp list found0\n");
+        PQclear(result);
+        return;
+    }
+
+    for(int i = 0; i < rows; i++) {
+        lv = atoi(PQgetvalue(result, i, 0));
+        exp_list[lv]=atoi(PQgetvalue(result, i, 1));
+        printf("레벨%d는 총 %d의 경험치가 있어야 %d로 레벨업 됨\n", lv, exp_list[lv], lv+1);
+    }
+    printf("EXP 총 %d 개 로드됨\n", rows);
     PQclear(result);
 }

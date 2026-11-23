@@ -17,3 +17,8 @@ extern void npc_set_def(char div, short no, char gtype, char level, char speed)
         def_mon[no].speed = speed;
     }
 }
+
+extern void npc_set(char div, short no, char x, char y)
+{
+    
+}

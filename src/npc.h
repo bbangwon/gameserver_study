@@ -11,3 +11,4 @@ typedef struct npc_default {
 } type_gnpc;
 
 void npc_set_def(char div, short no, char gtype, char level, char speed);
+void npc_set(char div, short no, char x, char y);

@@ -12,6 +12,8 @@
 /*packet end marker*/
 #define PEND 0xC8D1
 
+#define S_UNITSIZE	16
+
 enum {
    PK_USER_AUTH,
    PK_USER_CHAT=10,PK_USER_INFO,

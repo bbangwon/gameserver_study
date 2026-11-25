@@ -24,3 +24,6 @@ extern void item_load(type_item *item) {
     item0[item->item_no].coin = item->coin;
     item0[item->item_no].isbuy = item->isbuy;
 }
+
+extern void item_3x3_sectorinfo(type_session *c) {
+}

@@ -45,3 +45,6 @@ extern type_session* session_create(int sock, unsigned int addr, unsigned short 
 
 extern void session_clear(type_session  * c) {
 }
+
+extern void session_set_userid(type_session *c, char *userid, unsigned short uLen) {
+}

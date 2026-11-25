@@ -1,4 +1,5 @@
 #pragma once
+#include "session.h"
 
 typedef struct item {
     char is_init;
@@ -17,3 +18,4 @@ typedef struct item {
 
 void item_init();
 void item_load(type_item *item);
+void item_3x3_sectorinfo(type_session *c);

@@ -96,12 +96,12 @@ typedef struct connection {
     char Dir; // 목적지 방향(tile no.)
 
     /* 타겟 */
-    char gtype; //타겟 타입
+    char tgtype; //타겟 타입
     short target_id; //타겟 아이디
     void *target; //타겟 구조체
 
     /* 아이템 정의 */
-    unsigned short eg[7]; //장비 배열
+    unsigned short eq[7]; //장비 배열
 
     /* 인벤토리 정의 */
     unsigned short inven[4]; //인벤토리 4개
@@ -139,3 +139,5 @@ type_session* ret_session_first(unsigned int max);
 type_session* ret_session_next(unsigned int max);
 type_session* session_create(int sock, unsigned int addr, unsigned short port);
 void session_clear(type_session  * c);
+
+void session_set_userid(type_session *c, char *userid, unsigned short uLen);

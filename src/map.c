@@ -8,6 +8,9 @@
 
 static char			map[M_SIZE_X][M_SIZE_X];
 
+extern void mapinit(type_session *c) {
+}   
+
 extern void map_Load(){
     FILE *fp;
     unsigned int mxtileno;
@@ -38,4 +41,10 @@ extern void map_Load(){
         } 
         else map[x][y] = 1; //갈수 없는 곳
     }
+}
+
+extern void map_pData_snd(type_session *c, char *mesg, int pLen) {
+}
+
+extern void map_get_sectorinfo_All(type_session *c) {
 }

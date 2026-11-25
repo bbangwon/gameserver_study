@@ -180,6 +180,13 @@ extern void db_load_skillList(void *con)
     }
     printf("Skill 총 %d 개 로드됨\n", rows);
     PQclear(result);
+}
 
+extern void map_usersend_All(unsigned short mapSizeX, unsigned short mapSizeZ, char *retdata, int len, type_session *c)
+{
+}
 
+extern int db_user_auth(char *userid, char *passwd, int passlen, void *conn, type_session *c)
+{
+    return 0; //임시로 0 반환, 실제 구현 필요
 }

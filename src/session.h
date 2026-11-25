@@ -134,3 +134,8 @@ typedef struct connArray {
     int sockNo;
     char flag;
 }t_sessionArray;
+
+type_session* ret_session_first(unsigned int max);
+type_session* ret_session_next(unsigned int max);
+type_session* session_create(int sock, unsigned int addr, unsigned short port);
+void session_clear(type_session  * c);

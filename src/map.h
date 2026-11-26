@@ -1,5 +1,11 @@
 #pragma once
+#include "objlist.h"
 #include "session.h"
+
+typedef struct mapsys
+{
+	type_objlist *	objL;
+} type_map;
 
 void map_Load();
 void mapinit(type_session *c);

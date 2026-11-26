@@ -140,4 +140,4 @@ type_session* ret_session_next(unsigned int max);
 type_session* session_create(int sock, unsigned int addr, unsigned short port);
 void session_clear(type_session  * c);
 
-void session_set_userid(type_session *c, char *userid, unsigned short uLen);
+int session_set_userid(type_session *c, char *msg, int len);

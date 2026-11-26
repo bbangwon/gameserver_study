@@ -12,6 +12,7 @@
 /*packet end marker*/
 #define PEND 0xC8D1
 
+#define S_WIDTH  		32
 #define S_UNITSIZE	16
 
 enum {

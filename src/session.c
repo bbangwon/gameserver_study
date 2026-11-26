@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "session.h"
 #include "publicInc.h"
 
@@ -46,5 +47,10 @@ extern type_session* session_create(int sock, unsigned int addr, unsigned short 
 extern void session_clear(type_session  * c) {
 }
 
-extern void session_set_userid(type_session *c, char *userid, unsigned short uLen) {
+extern int session_set_userid(type_session *c, char *msg, int len) {
+    if(len>20) return 0;
+    memcpy(&c->userid[0], &msg[0], len);
+    c->userid[len] = '\0';
+    c->uLen = len;
+    return 1;
 }

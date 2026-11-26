@@ -2,13 +2,17 @@
 #include <stdlib.h>
 #include "map.h"
 #include "npc.h"
+#include "objlist.h"
+#include "publicInc.h"
 
 #define MAP_FILE "/home/bbangwon/workspace/gameserver_study/svrmap1.dat"
 #define M_SIZE_X 512
 
+static type_map	mapArray[S_WIDTH][S_WIDTH];
 static char			map[M_SIZE_X][M_SIZE_X];
 
 extern void mapinit(type_session *c) {
+    add_node_objlist(&(mapArray[c->Ax][c->Ay].objL), c);
 }   
 
 extern void map_Load(){

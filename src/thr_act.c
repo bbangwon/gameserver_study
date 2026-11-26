@@ -13,6 +13,10 @@ int svr_ret_tot() {
     return 0;
 }
 
+short mvAction_set(type_session *c, short Dx, short Dy, short dirL){
+    return 0;
+}
+
 static void thr_inveninfo(type_session *c) {
     char msg[128];
     short Len=2;
@@ -280,5 +284,68 @@ extern int thr_beforeAuth(char *dat, type_session *c, void *conn, int udpsock) {
 }
 
 extern int main_act(char *dat, short pLen, type_session *c, void *conn, int udpsock) {
-    return 0;
+    int rLen=2, res;
+    char mesg[MAX_PACKET_SIZE];
+    unsigned short nEnd = PEND;
+    unsigned short Ax, Az, headercd;
+    short Tx,Ty;
+    unsigned char DIR;
+    
+    headercd =dat[2];
+    switch(headercd) {
+        case PK_CMD_MV: 
+            memcpy(&Tx, &dat[3], 2); //이동할 셀의 좌표
+            memcpy(&Ty, &dat[5], 2);
+            DIR=dat[7];
+            if(Tx>=M_SIZE_X||Ty>=M_SIZE_X||DIR>=8) { //전송받은 값이 올바른지 체크
+                res=0;
+            } else {
+                if(c->Cx==Tx && c->Cy==Ty) res=0;
+                else {
+                    pthread_mutex_lock(&synclock);
+                    res=mvAction_set(c, Tx, Ty, DIR);
+                    pthread_mutex_unlock(&synclock);
+                }
+            }
+            printf("before:%d,%d after:%d,%d res:%d\n", c->Cx, c->Cy, Tx, Ty, res);
+            mesg[rLen] = PK_OBJ_UPDATE_ACT;
+            rLen += 1;
+            
+            mesg[rLen] = T_USER;
+            rLen += 1;
+
+            mesg[rLen] = 1; //카운트
+            rLen += 1;
+
+            memcpy(&mesg[rLen], &c->userNo, 2);
+            rLen += 2;
+
+            mesg[rLen] = S_MOVE;
+            rLen += 1;
+
+            mesg[rLen]=c->Dir;
+            rLen += 1;
+
+            mesg[rLen]=c->moveLevel;
+            rLen += 1;
+
+            memcpy(&mesg[rLen], &c->Cx, 2);
+            rLen += 2;
+            memcpy(&mesg[rLen], &c->Cy, 2);
+            rLen += 2;
+            memcpy(&mesg[rLen], &c->Dx, 2);
+            rLen += 2;
+            memcpy(&mesg[rLen], &c->Dy, 2);
+            rLen += 2;
+
+            memcpy(&mesg[rLen], &nEnd, 2);
+            rLen += 2;
+            memcpy(&mesg[0], &rLen, 2); // 패킷 길이 정보 업데이트
+
+            if(res==1){
+                map_usersend_All(c->Ax, c->Ay, mesg, rLen, NULL);
+            }
+            break;         
+    }
+
 }

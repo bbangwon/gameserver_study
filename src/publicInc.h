@@ -12,6 +12,8 @@
 /*packet end marker*/
 #define PEND 0xC8D1
 
+#define M_SIZE_X 512
+
 #define S_WIDTH  		32
 #define S_UNITSIZE	16
 
@@ -22,12 +24,20 @@ enum {
    PK_CMD_MV=30,PK_USER_MV, PK_USER_DISCON,
    PK_OBJ_ADD=40, 
    PK_INVEN_INFO, 
-   PK_SKILL_INFO
+   PK_SKILL_INFO,
+   PK_OBJ_UPDATE_ACT
 };
+
+/*obj type
+0:USER	1:NPC/NONSTER	2:ITEM
+*/
+enum {T_USER,	T_NPC,	T_ITEM};
 
 /*obj status
 0:stand	1:move	2:fight	3:trade
 */
 enum {S_STAND,	S_MOVE,	S_FIGHT,	S_TRADE, S_DIE, S_RET, S_REGEN, S_REMOVE};
+
+
 
 extern pthread_mutex_t 		synclock;

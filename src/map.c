@@ -6,7 +6,6 @@
 #include "publicInc.h"
 
 #define MAP_FILE "/home/bbangwon/workspace/gameserver_study/svrmap1.dat"
-#define M_SIZE_X 512
 
 static type_map	mapArray[S_WIDTH][S_WIDTH];
 static char			map[M_SIZE_X][M_SIZE_X];

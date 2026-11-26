@@ -54,6 +54,9 @@ extern void map_pData_snd(type_session *c, char *mesg, int pLen) {
 extern void map_secdata_snd(short ax, short ay, char *retdata, short dLen) {
 }
 
+extern void map_secdata_snd_client(short x, short z, type_session *c) {
+}
+
 extern void map_get_sectorinfo_All(type_session *c) {
 }
 
@@ -415,5 +418,119 @@ extern void map_bk_sectorinfo(type_session *c) {
 }
 
 extern void map_get_sectorinfo(type_session *c) {
-    // Implementation for receiving the current sector info from the client
+    // 캐릭터의 섹터 이동으로 인해 새로운 섹터에 정보를 받는다.
+    int x,y,ax,ay,i;
+
+    x = c->Bx - c->Ax;
+    y = c->By - c->Ay;
+
+    if(x==0 && y<0) { //12시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay +1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+    } else if(x<0 && y<0) { //1시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay +1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+
+        for(i=0;i<2;i++) {
+            ax = c->Ax +1;
+            ay = c->Ay -i;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+    } else if(x<0 && y==0) { //3시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax +1;
+            ay = c->Ay -i+2;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+    } else if(x<0 && y>0) { //4시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay -1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+
+        for(i=0;i<2;i++) {
+            ax = c->Ax +1;
+            ay = c->Ay +i;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+    } else if(x==0 && y>0) { //6시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay -1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+    } else if(x>0 && y>0) { //7시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay -1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+
+        for(i=0;i<2;i++) {
+            ax = c->Ax -1;
+            ay = c->Ay +i;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+    } else if(x>0 && y==0) { //9시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -1;
+            ay = c->Ay -i+2;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+    } else if(x>0 && y<0) { //10시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay +1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+
+        for(i=0;i<2;i++) {
+            ax = c->Ax -1;
+            ay = c->Ay -i;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd_client(ax, ay, c);
+            } else continue;
+        }
+    }
 }

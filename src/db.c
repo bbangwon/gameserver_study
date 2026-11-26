@@ -182,10 +182,6 @@ extern void db_load_skillList(void *con)
     PQclear(result);
 }
 
-extern void map_usersend_All(unsigned short mapSizeX, unsigned short mapSizeZ, char *retdata, int len, type_session *c)
-{
-}
-
 extern int db_user_auth(char *userid, char *passwd, int passlen, void *conn, type_session *c)
 {
     int state, len;

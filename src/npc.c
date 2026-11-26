@@ -1,10 +1,12 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "npc.h"
 #include "map.h"
 #include "publicInc.h"
 
 static type_npc 	 * npcArray[_MAX_MONSTER_NO];
+static type_npcmap	mapNpcArray[S_WIDTH][S_WIDTH];
 
 static int				npc_cnt=0;
 
@@ -135,7 +137,175 @@ void * Thread_npc_sync(void *arg){
     }
 }
 
-extern void npc_mv_set(unsigned short idx)
+extern void npc_mv_set(unsigned short idx) //일반 이동
 {
+    int res=0;
 
+    if(npcArray[idx]->move_F_cnt>=NPC_MV_FRAME) {
+        //첫 프레임에서 경로 찾기나 움직일 수 있는지를 구한다. 충돌 체크
+        npcArray[idx]->move_F_cnt = 0;
+        res = npc_mv_one(npcArray[idx]); //카운트가 다 되었으니 한 칸 이동
+
+        if(npcArray[idx]->mvstatus == 0) { //처음 접할 때
+            if(res==1) {
+                if(npcArray[idx]->x == npcArray[idx]->dx && npcArray[idx]->y == npcArray[idx]->dy) { //목적지 도착
+                    if(npcArray[idx]->tgFlag == 0) npcArray[idx]->status = S_STAND;
+                    else npcArray[idx]->status = S_FIGHT;
+                    npcArray[idx]->mvstatus = 0; //이동
+                } else npcArray[idx]->mvstatus = 1; //이동
+            }
+        } else {
+            if(res==0) { //섹터 이동 실패
+                npcArray[idx]->status = S_STAND;
+                npcArray[idx]->mvstatus = 0; //이동                
+            } else { //이동 성공시
+                if(npcArray[idx]->x == npcArray[idx]->dx && npcArray[idx]->y == npcArray[idx]->dy) { //목적지 도착
+                    if(npcArray[idx]->tgFlag == 0) npcArray[idx]->status = S_STAND;
+                    else npcArray[idx]->status = S_FIGHT;
+                    npcArray[idx]->mvstatus = 0; //이동
+                }
+            }
+        }
+    } else npcArray[idx]->move_F_cnt++;
+}
+
+extern int npc_mv_one(type_npc * npc)   //한칸만 이동
+{
+    type_objlist **pos;
+    type_objlist *tmp;
+    short tmpx, tmpy;
+    unsigned short nEnd = PEND;
+    char mesg[64];
+    short rLen=2;
+    short DIRx, DIRy;
+
+    if(npc->x == npc->dx && npc->y == npc->dy) { //목표지점 도착
+        return 1;
+    }
+
+    DIRx = npc->x - npc->dx;
+    DIRy = npc->y - npc->dy;
+    tmpx = npc->x;
+    tmpy = npc->y;
+
+    if(DIRx==0 && DIRy < 0) {
+        npc->DirLoc = 4; //12시 방향
+        tmpy +=1;
+    } else if(DIRx<0 && DIRy<0) {
+        npc->DirLoc=3; //1시 방향
+        tmpx +=1;
+        tmpy +=1;
+    } else if(DIRx<0 && DIRy==0) {
+        npc->DirLoc=2; //3시 방향
+        tmpx +=1;
+    } else if(DIRx<0 && DIRy>0) {
+        npc->DirLoc=1; //5시 방향
+        tmpx +=1;
+        tmpy -=1;
+    } else if(DIRx==0 && DIRy>0) {
+        npc->DirLoc=0; //6시 방향
+        tmpy -=1;
+    } else if(DIRx>0 && DIRy>0) {
+        npc->DirLoc=7; //7시 방향
+        tmpx -=1;
+        tmpy -=1;
+    } else if(DIRx>0 && DIRy==0) {
+        npc->DirLoc=6; //9시 방향
+        tmpx -=1;
+    } else if(DIRx>0 && DIRy<0) {
+        npc->DirLoc=5; //11시 방향
+        tmpx -=1;
+        tmpy +=1;
+    }
+
+    //이 부분에 길찾기를 넣을 수 있다.
+    if(npc->npc_id==17) printf("%d npc %d, %d -> %d,%d로 한 칸이동\n", npc->npc_id, npc->x, npc->y, tmpx, tmpy);
+    if(tmpx<0) tmpx = 0;
+    if(tmpy<0) tmpy = 0;
+    npc->x = tmpx;
+    npc->y = tmpy;
+    if(npc->x >= M_SIZE_X|| npc->y >= M_SIZE_X) {
+        npc->status = S_STAND;
+    }
+
+    if(npc->mvstatus == 0) { //0이면 처음 움직이는 것이므로 패킷 발송해야 함
+        mesg[rLen] = PK_OBJ_UPDATE_ACT;
+        rLen+= 1;
+
+        mesg[rLen] = T_NPC;
+        rLen+=1;
+
+        mesg[rLen] = 1; //카운트
+        rLen+=1;
+
+        mesg[rLen] = npc->div;
+        rLen+=1;
+
+        memcpy(&mesg[rLen], &npc->npc_id,2);
+        rLen+=2;
+
+        mesg[rLen] = S_MOVE;
+        rLen+=1;
+
+        mesg[rLen] = npc->DirLoc;
+        rLen+=1;
+
+        mesg[rLen] = npc->speed;
+        rLen+=1;
+
+        memcpy(&mesg[rLen], &npc->x, 2);
+        rLen+=2;
+        memcpy(&mesg[rLen], &npc->y, 2);
+        rLen+=2;
+
+        memcpy(&mesg[rLen], &npc->dx, 2);
+        rLen+=2;
+        memcpy(&mesg[rLen], &npc->dy, 2);
+        rLen+=2;
+
+        memcpy(&mesg[rLen], &nEnd, 2);
+        rLen+=2;
+        memcpy(&mesg[0], &rLen, 2);
+        map_usersend_All(npc->ARx, npc->ARy, mesg, rLen, NULL);
+        npc->mvstatus = 1;
+    }
+
+    tmpx = npc->x/S_UNITSIZE;
+    tmpy = npc->y/S_UNITSIZE;
+
+    if(tmpx!=npc->ARx || tmpy!=npc->ARy) {
+        if( !npc) {
+            printf("npc pointer null\n");
+            return 0;
+        }
+
+        if(mapNpcArray[npc->ARx][npc->ARy].objL == NULL) {
+            printf("mapArray NULL list in map_char_mv\n");
+            return 0;
+        }
+
+        pos = find_node_objlist(&(mapNpcArray[npc->ARx][npc->ARy].objL), npc);
+        if(pos == NULL){
+            printf("pos not found\n");
+            return 0;
+        }
+
+        tmp = pop_data(pos);
+        if(!tmp) {
+            printf("no pop\n");
+            return 0;
+        }
+        insert_node_objlist(&(mapNpcArray[tmpx][tmpy].objL), tmp);
+
+        npc->ARx = tmpx;
+        npc->ARy = tmpy;
+
+        npc_mv_addinfo(npc);
+    }
+    return 1;
+}
+
+extern void npc_mv_addinfo(type_npc * npc)
+{
+    
 }

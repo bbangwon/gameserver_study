@@ -13,6 +13,8 @@
 
 #define _MAX_MONSTER_NO 21
 
+#define NPC_MV_FRAME		0x0D
+
 
 /*packet end marker*/
 #define PEND 0xC8D1

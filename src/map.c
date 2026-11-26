@@ -534,3 +534,7 @@ extern void map_get_sectorinfo(type_session *c) {
         }
     }
 }
+
+extern void map_usersend_All(unsigned short mapSizeX, unsigned short mapSizeZ, char *retdata, int len, type_session *c)
+{
+}

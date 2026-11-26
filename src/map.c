@@ -51,3 +51,10 @@ extern void map_pData_snd(type_session *c, char *mesg, int pLen) {
 
 extern void map_get_sectorinfo_All(type_session *c) {
 }
+
+extern short map_isgo(unsigned short x, unsigned short y) {
+    return 0;
+}
+
+extern void map_chrAction_calc(type_session * c) {
+}

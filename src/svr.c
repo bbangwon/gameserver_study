@@ -7,11 +7,14 @@
 #include <netinet/in.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <pthread.h>
 #include <libpq-fe.h>
 
 #include "session.h"
 #include "thr_act.h"
+#include "map.h"
+#include "svr.h"
 #include "publicInc.h"
 
 typedef struct sockPair{
@@ -22,10 +25,16 @@ typedef struct sockPair{
 int tUsercnt			= 0;
 
 pthread_mutex_t 		synclock		= PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t		synccond = PTHREAD_COND_INITIALIZER;
 
 void main()
 {
     
+}
+
+extern int svr_ret_tot()
+{
+    return tUsercnt;
 }
 
 
@@ -227,4 +236,75 @@ void * Thread_recvpack(void *arg)
     } //무한루프 끝
 
     PQfinish(conn);
+}
+
+void *Thread_sync(void *arg) {
+    struct timeval start, stop;
+    long tmp, utmp;
+    short regenTime, Half_sec;
+    int maxNo;
+    type_session *c;
+
+    sleep(3);
+    regenTime = _ONE_SEC*30; //부활하는데 걸리는 프레임 수
+    Half_sec = _ONE_SEC/2;
+    for(;;) {
+        gettimeofday(&start, NULL); //루프 시작 시간을 알아옴
+        pthread_mutex_lock(&synclock); //세션 동기화 시작
+        maxNo = svr_ret_tot();
+        for(c=ret_session_first(maxNo);c;c=ret_session_next(maxNo)){
+            //게임 중 아님
+            if(c->state==conn_state_empty||c->state==conn_state_destroy) continue;
+            if(c->userStat == S_MOVE) { //움직이는 상태?
+                if(c->Cx == c->Dx && c->Cy == c->Dy) { //목적지 도달
+                    c->userStat = S_STAND; //멈춰진 상태
+                } else {
+                    map_chrAction_calc(c);
+                }
+            }
+
+            if(c->attack_F_cnt>-1) { // 전투 중인 상태의 경우
+                c->attack_F_cnt+=1; //공격 hit 프레임 증가
+                if(c->attack_F_cnt > Half_sec) c->attack_F_cnt=-1; //공격할 타이밍일 때 
+            }
+
+            if(c->party.flag==1 && c->party.ison1==2) { //파티장일 경우
+                if(c->party.infoFcnt > _TWO_MIN) { //2분마다 파티원의 데이터를 전
+                    c->party.infoFcnt = 0;
+                    thr_party_info(c);
+                } else c->party.infoFcnt++;
+            }
+            c->dbSaveCnt++;
+            // if(c->dbSaveCnt > 시간됨) {
+            //     db_save_data(c, conn);
+            //     c->dbSaveCnt = 0;
+            // }
+        }
+        pthread_cond_signal(&synccond);
+        pthread_mutex_unlock(&synclock);
+
+        gettimeofday(&stop, NULL); // 끝나는 시간 체크
+        tmp = stop.tv_sec - start.tv_sec;
+        utmp = stop.tv_usec - start.tv_usec;
+        //시작과 끝난 시간으로 걸린 시간을 알아낸다.
+
+        if(tmp>1) { //1프레임 0.33초 33000마이크로초 -> 1프레임에 걸리는 시간            
+
+        } else if(tmp==1) {
+            utmp = 1000000 + utmp; // 걸린 시간
+            if(utmp<AFRAME) {
+                stop.tv_sec = 0;
+                stop.tv_usec=AFRAME-utmp;
+                select(0, NULL, NULL, NULL, &stop);
+                //1프레임 시간보다 빨리 끝날 경우 남는 시간만큼 멈춘다.
+            }
+        } else {
+            if(utmp<AFRAME) {
+                stop.tv_sec=0;
+                stop.tv_usec=AFRAME-utmp;
+                select(0, NULL, NULL, NULL, &stop);          }
+        }
+
+    }
+
 }

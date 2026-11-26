@@ -7,14 +7,17 @@
 #include "thr_act.h"
 #include "npc.h"
 #include "item.h"
+#include "svr.h"
 #include "publicInc.h"
 
-int svr_ret_tot() {
-    return 0;
-}
-
-short mvAction_set(type_session *c, short Dx, short Dy, short dirL){
-    return 0;
+static short mvAction_set(type_session *c, short Dx, short Dy, short dirL){
+    if(!c) return 0;
+    c->Dir = dirL;
+    c->userStat = 1;
+    if((map_isgo(Dx,Dy))==1) return 0; //이동 가능지역 체크
+    c->Dx = Dx; //목적지 셀 좌표
+    c->Dy = Dy;
+    return 1;
 }
 
 static void thr_inveninfo(type_session *c) {
@@ -79,6 +82,11 @@ static void thr_skillinfo(type_session *c) {
     
     memcpy(&msg[0], &Len, 2);
     map_pData_snd(c, msg, Len);
+}
+
+extern void thr_party_info(type_session * c)
+{
+    
 }
 
 extern int thr_beforeAuth(char *dat, type_session *c, void *conn, int udpsock) {

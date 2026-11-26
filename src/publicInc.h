@@ -1,6 +1,8 @@
 #pragma once
 #include <pthread.h>
 
+#define GAME_FRAME 	0x0F
+
 #define MAXUSERNUM 	0x1000
 
 #define _MAX_DEFAULT_ITEM 100
@@ -8,6 +10,7 @@
 #define MAXUSERLEVEL 0x0A
 
 #define MAX_PACKET_SIZE 0x400
+
 
 /*packet end marker*/
 #define PEND 0xC8D1
@@ -41,3 +44,8 @@ enum {S_STAND,	S_MOVE,	S_FIGHT,	S_TRADE, S_DIE, S_RET, S_REGEN, S_REMOVE};
 
 
 extern pthread_mutex_t 		synclock;
+extern pthread_cond_t		synccond;
+
+#define AFRAME	900000/GAME_FRAME
+#define _ONE_SEC	GAME_FRAME
+#define _TWO_MIN	GAME_FRAME*120

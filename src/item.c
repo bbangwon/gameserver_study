@@ -28,6 +28,9 @@ extern void item_load(type_item *item) {
 extern void item_3x3_sectorinfo(type_session *c) {
 }
 
+extern void item_part_sectorinfo(type_session *c) {
+}
+
 extern unsigned short item_get_attack(unsigned short item_no) {
     return 0;
 }

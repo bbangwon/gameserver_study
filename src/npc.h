@@ -23,4 +23,6 @@ typedef struct npc_baseinfo
 
 void npc_set_def(char div, short no, char gtype, char level, char speed);
 void npc_set(char div, short no, char x, char y);
+
 void npc_3x3_sectorinfo(type_session *c);
+void npc_chr_mv_addinfo(type_session *c);

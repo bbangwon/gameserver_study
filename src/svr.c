@@ -302,7 +302,8 @@ void *Thread_sync(void *arg) {
             if(utmp<AFRAME) {
                 stop.tv_sec=0;
                 stop.tv_usec=AFRAME-utmp;
-                select(0, NULL, NULL, NULL, &stop);          }
+                select(0, NULL, NULL, NULL, &stop);          
+            }
         }
 
     }

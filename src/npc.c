@@ -25,3 +25,6 @@ extern void npc_set(char div, short no, char x, char y)
 
 extern void npc_3x3_sectorinfo(type_session *c) {
 }
+
+extern void npc_chr_mv_addinfo(type_session *c) {
+}

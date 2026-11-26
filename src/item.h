@@ -18,6 +18,9 @@ typedef struct item {
 
 void item_init();
 void item_load(type_item *item);
+
+void item_part_sectorinfo(type_session *c);
 void item_3x3_sectorinfo(type_session *c);
+
 unsigned short item_get_attack(unsigned short item_no);
 unsigned short item_get_defense(unsigned short item_no);

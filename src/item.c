@@ -46,3 +46,20 @@ extern unsigned short item_get_range(unsigned short item_no) {
 extern short map_ret_chrdist(unsigned short x, unsigned short y,unsigned short idx) {
     return 0;
 }
+
+extern short item_ret_default_cnt(unsigned short idx){
+    return 0;
+}
+
+extern unsigned int retNullitemIdx()
+{
+    return 0;
+}
+
+extern void setitemIdx(int idx){
+
+}
+
+extern type_itemLst_field * item_add_sect(unsigned short x, unsigned short y, type_itemLst_field * fitem) {
+    return NULL;
+}

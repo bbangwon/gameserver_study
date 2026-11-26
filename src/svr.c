@@ -27,6 +27,7 @@ int tUsercnt			= 0;
 pthread_mutex_t 		synclock		= PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t		synccond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t 		npclock		= PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t 		itemlock		= PTHREAD_MUTEX_INITIALIZER;
 
 void main()
 {

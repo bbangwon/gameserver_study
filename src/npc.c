@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "db.h"
 #include "npc.h"
 #include "map.h"
+#include "item.h"
 #include "publicInc.h"
 
 static type_npc 	 * npcArray[_MAX_MONSTER_NO];
@@ -495,5 +498,108 @@ extern short npc_chr_attack_npc(void * chr, unsigned short Index,void * conn)
 
 extern short npc_drop_item(type_npc * npc, unsigned short userNo)
 {
-    return 0;
+    type_itemLst_field *temp;   
+    unsigned int ItmNo;
+    int tmp=0, cnt=0, loopCnt=0, i;
+    short dLen=2;
+    char data[128];
+    unsigned short nEnd = PEND;
+
+    tmp = (((unsigned int)rand())^((unsigned int)time(NULL)))%100;
+    // 10% 확률로 아이템 2개 획득
+    if(tmp < 10) loopCnt=2;
+    else loopCnt=1;
+
+    data[dLen] = PK_OBJ_ADD;
+    dLen+=1;
+    data[dLen] = T_ITEM;
+    dLen+=1;
+    // data[dLen] = 1;
+    dLen+=1;
+
+    for(i=0;i<12;i++) {
+        tmp = (((unsigned int)rand())^((unsigned int)time(NULL)))%100;
+        if(npc->div==1) { //NPC
+            if(def_npc[npc->npc_id].rate[i] >= tmp){
+                if(def_npc[npc->npc_id].item[i]==0) continue; //생성 아이템이 없음
+                cnt+=1;
+                if(!(temp = malloc(sizeof(type_itemLst_field)))) return 0;
+
+                temp->rmFcnt = 0;
+                temp->rmHcnt = 0;
+
+                pthread_mutex_lock(&itemlock);
+                temp->item_idx_cnt=item_ret_default_cnt(def_npc[npc->npc_id].item[i]);
+                if(temp->item_idx_cnt==0){
+                    free(temp);
+                    pthread_mutex_unlock(&itemlock);
+                    continue;
+                }
+                ItmNo = retNullitemIdx();
+                setitemIdx(ItmNo);
+                temp->idx = ItmNo;
+                item_add_sect(npc->ARx, npc->ARy, temp);
+                temp->x=npc->x;
+                temp->y=npc->y;
+                temp->item_idx=def_npc[npc->npc_id].item[i];
+                pthread_mutex_unlock(&itemlock);
+
+                memcpy(&data[dLen], &temp->idx, 2);
+                dLen+=2;
+                memcpy(&data[dLen], &temp->x, 2);
+                dLen+=2;
+                memcpy(&data[dLen], &temp->y, 2);
+                dLen+=2;
+                memcpy(&data[dLen], &temp->item_idx, 2);
+                dLen+=2;
+                memcpy(&data[dLen], &temp->item_idx_cnt, 2);
+                dLen+=2;
+            }
+        } else {
+            //몬스터
+            if(def_mon[npc->npc_id].rate[i] >= tmp) {
+                if(def_mon[npc->npc_id].item[i]==0) continue;
+                cnt+=1;
+
+                if(!(temp = malloc(sizeof(type_itemLst_field)))) return 0;
+
+                temp->rmFcnt = 0;
+                temp->rmHcnt = 0;
+
+                pthread_mutex_lock(&itemlock);
+                temp->item_idx_cnt=item_ret_default_cnt(def_mon[npc->npc_id].item[i]);
+                if(temp->item_idx_cnt==0){
+                    free(temp);
+                    pthread_mutex_unlock(&itemlock);
+                    continue;
+                }
+                ItmNo = retNullitemIdx();
+                setitemIdx(ItmNo);
+                temp->idx = ItmNo;
+                item_add_sect(npc->ARx, npc->ARy, temp);
+                temp->x=npc->x;
+                temp->y=npc->y;
+                temp->item_idx=def_mon[npc->npc_id].item[i];
+                pthread_mutex_unlock(&itemlock);
+
+                memcpy(&data[dLen], &temp->idx, 2);
+                dLen+=2;
+                memcpy(&data[dLen], &temp->x, 2);
+                dLen+=2;
+                memcpy(&data[dLen], &temp->y, 2);
+                dLen+=2;
+                memcpy(&data[dLen], &temp->item_idx, 2);
+                dLen+=2;
+                memcpy(&data[dLen], &temp->item_idx_cnt, 2);
+                dLen+=2;
+            }
+        }
+        if(cnt==loopCnt) break;
+    }
+    data[4] = cnt;
+    memcpy(&data[dLen], &nEnd, 2);
+    dLen+=2;
+    memcpy(&data[0], &dLen, 2);
+    map_usersend_All(npc->ARx, npc->ARy, data, dLen, NULL);
+    return 1;
 }

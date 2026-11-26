@@ -16,6 +16,19 @@ typedef struct item {
     char isbuy; //구입 가능 여부
 } type_item;
 
+typedef struct fItem 
+{
+    unsigned short		idx;
+	unsigned short 	x;
+	unsigned short		y;
+
+	unsigned short		item_idx;
+    unsigned	short		item_idx_cnt;
+
+	unsigned short		rmFcnt;
+	unsigned short		rmHcnt;
+} type_itemLst_field;
+
 void item_init();
 void item_load(type_item *item);
 
@@ -27,3 +40,8 @@ unsigned short item_get_defense(unsigned short item_no);
 unsigned short item_get_range(unsigned short item_no);
 
 short map_ret_chrdist(unsigned short x, unsigned short y,unsigned short idx);
+short item_ret_default_cnt(unsigned short idx);
+unsigned int retNullitemIdx();
+void setitemIdx(int idx);
+
+type_itemLst_field * item_add_sect(unsigned short x, unsigned short y, type_itemLst_field * fitem);

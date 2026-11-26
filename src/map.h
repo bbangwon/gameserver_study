@@ -10,6 +10,7 @@ typedef struct mapsys
 void map_Load();
 void mapinit(type_session *c);
 void map_pData_snd(type_session *c, char *mesg, int pLen);
+void map_secdata_snd(short ax, short ay, char *retdata, short dLen);
 void map_get_sectorinfo_All(type_session *c);
 short map_isgo(unsigned short x, unsigned short y);
 void map_chrAction_calc(type_session * c);

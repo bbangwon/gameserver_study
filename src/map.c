@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "map.h"
 #include "npc.h"
 #include "objlist.h"
@@ -48,6 +49,9 @@ extern void map_Load(){
 }
 
 extern void map_pData_snd(type_session *c, char *mesg, int pLen) {
+}
+
+extern void map_secdata_snd(short ax, short ay, char *retdata, short dLen) {
 }
 
 extern void map_get_sectorinfo_All(type_session *c) {
@@ -156,7 +160,258 @@ extern int map_char_one_mv(type_session * c,unsigned short x,unsigned short y) {
 }
 
 extern void map_bk_sectorinfo(type_session *c) {
-    // Implementation for sending the current sector info to the client
+    //캐릭터의 섹터 이동으로 인해 새로운 섹터에 정보를 전달한다.
+    int x,y;
+    int ax, ay,i;
+    short dLen=2;
+    char udata[128];
+    unsigned short nEnd = PEND;
+    type_session *usr;
+    type_npc *npc;
+
+    memset(udata, 0, 128);
+    udata[dLen] = PK_OBJ_ADD;
+    dLen+=1;
+
+    udata[dLen] = T_USER;
+    dLen+=1;
+
+    udata[dLen] = 1;
+    dLen+=1;
+
+    memcpy(&udata[dLen], &c->userNo, 2);
+    dLen += 2;
+
+    udata[dLen] = c->nLen;
+    dLen += 1;
+
+    memcpy(&udata[dLen], &c->char_name[0],c->nLen);
+    dLen += c->nLen;
+
+    udata[dLen] = c->race;
+    dLen += 1;
+
+    udata[dLen] = c->sex;
+    dLen += 1;
+
+    udata[dLen]=c->nation;
+    dLen += 1;
+
+    memcpy(&udata[dLen], &c->str, 2);
+    dLen += 2;
+
+    memcpy(&udata[dLen], &c->dex, 2);
+    dLen += 2;
+
+    memcpy(&udata[dLen], &c->intel, 2);
+    dLen += 2;
+
+    memcpy(&udata[dLen], &c->hp_c, 2);
+    dLen += 2;
+
+    memcpy(&udata[dLen], &c->mana_c, 2);
+    dLen += 2;
+
+    memcpy(&udata[dLen], &c->exp, 4);
+    dLen += 4;
+
+    memcpy(&udata[dLen], &c->level, 2);
+    dLen += 2;
+
+    memcpy(&udata[dLen], &c->lvpoint, 2);
+    dLen += 2;
+
+    memcpy(&udata[dLen], &c->skexp, 2);
+    dLen += 2;
+
+    udata[dLen] = c->jobno;
+    dLen += 1;
+
+    udata[dLen] = c->classno;
+    dLen += 1;
+
+    udata[dLen] = c->classlevel;
+    dLen += 1;
+
+    memcpy(&udata[dLen], &c->eq[0], 2);
+    dLen += 2;
+    memcpy(&udata[dLen], &c->eq[1], 2);
+    dLen += 2;
+    memcpy(&udata[dLen], &c->eq[2], 2);
+    dLen += 2;
+    memcpy(&udata[dLen], &c->eq[3], 2);
+    dLen += 2;
+    memcpy(&udata[dLen], &c->eq[4], 2);
+    dLen += 2;
+    memcpy(&udata[dLen], &c->coin, 4);
+    dLen += 4;
+
+    udata[dLen]=c->userStat;
+    dLen += 1;
+    if(c->userStat == 0) { //멈춤
+        udata[dLen]=c->Dir;
+        dLen += 1;
+
+        memcpy(&udata[dLen], &c->Ax, 2);
+        dLen += 2;
+        memcpy(&udata[dLen], &c->Ay, 2);
+        dLen += 2;
+    } else if(c->userStat == 1) { //이동
+        udata[dLen]=c->Dir;
+        dLen += 1;
+
+        udata[dLen] = c->moveLevel;
+        dLen += 1;
+
+        memcpy(&udata[dLen], &c->Cx, 2);
+        dLen += 2;
+        memcpy(&udata[dLen], &c->Cy, 2);
+        dLen += 2;
+        memcpy(&udata[dLen], &c->Dx, 2);
+        dLen += 2;        
+        memcpy(&udata[dLen], &c->Dy, 2);
+        dLen += 2;
+    } else if(c->userStat == 2) { //싸움
+        udata[dLen]=c->Dir;
+        dLen += 1;
+        udata[dLen] = c->tgtype;
+        dLen += 1;
+        if(c->tgtype == 0) { //PK
+            usr=(type_session *)c->target;
+            memcpy(&udata[dLen], &usr->userNo, 2);
+            dLen += 2;
+        } else { //몬스터
+            npc=(type_npc *)c->target;
+            memcpy(&udata[dLen], &npc->npc_id, 2);
+            dLen += 2;
+        }
+        memcpy(&udata[dLen], &c->Ax, 2);
+        dLen += 2;
+        memcpy(&udata[dLen], &c->Ay, 2);
+        dLen += 2;
+    } else { //거래, 죽음
+        udata[dLen] = c->Dir;
+        dLen += 1;
+
+        memcpy(&udata[dLen], &c->Ax, 2);
+        dLen += 2;
+        memcpy(&udata[dLen], &c->Ay, 2);
+        dLen += 2;        
+    }
+
+    memcpy(&udata[dLen], &nEnd, 2);
+    dLen += 2;
+    memcpy(&udata[0], &dLen, 2);
+
+    x = c->Bx - c->Ax;
+    y = c->By - c->Ay;
+
+    if(x==0 && y<0) { //12시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay +1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+    } else if(x<0 && y<0) { //1시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay +1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+
+        for(i=0;i<2;i++) {
+            ax = c->Ax +1;
+            ay = c->Ay -i;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+    } else if(x<0 && y==0) { //3시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax +1;
+            ay = c->Ay -i+2;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+    } else if(x<0 && y>0) { //4시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay -1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+        for(i=0;i<2;i++) {
+            ax = c->Ax +1;
+            ay = c->Ay +i;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+    } else if(x==0 && y>0) { //6시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay -1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+    } else if(x>0 && y>0) { //7시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay -1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+        for(i=0;i<2;i++) {
+            ax = c->Ax -1;
+            ay = c->Ay +i;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+    } else if(x>0 && y==0) { //9시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -1;
+            ay = c->Ay -i+2;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+    } else if(x>0 && y<0) { //10시 방향
+        for(i=3;i>0;i--) {
+            ax = c->Ax -i+2;
+            ay = c->Ay +1;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+        for(i=0;i<2;i++) {
+            ax = c->Ax -1;
+            ay = c->Ay -i;
+
+            if(ax>=0 && ax<S_WIDTH && ay >= 0 && ay < S_WIDTH) {
+                map_secdata_snd(ax, ay, udata, dLen);
+            } else continue;
+        }
+    }
 }
 
 extern void map_get_sectorinfo(type_session *c) {

@@ -13,10 +13,68 @@ int svr_ret_tot() {
     return 0;
 }
 
-void thr_inveninfo(type_session *c) {
+static void thr_inveninfo(type_session *c) {
+    char msg[128];
+    short Len=2;
+    int i,cnt = 0;
+    unsigned short nEnd = PEND;
+
+    if(c==NULL) return;
+
+    msg[Len] = PK_INVEN_INFO;
+    Len +=2;
+
+    for(i=0;i<4;i++) { // 인벤토리 총 수만큼 루프
+        if(c->inven[i]>0) {
+            msg[Len] = i;
+            Len += 1;
+    
+            memcpy(&msg[Len], &c->inven[i], 2);
+            Len += 2;
+    
+            msg[Len]=c->inven_cnt[i];
+            Len+=1;
+    
+            cnt+=1;
+        }
+    }
+    msg[3]=cnt; //인벤토리의 총 아이템 수
+    memcpy(&msg[Len], &nEnd, 2);
+    Len += 2;
+    memcpy(&msg[0], &Len, 2);
+    map_pData_snd(c, msg, Len);  //클라이언트에 인벤토리 정보 전송
 }
 
-void thr_skillinfo(type_session *c) {
+static void thr_skillinfo(type_session *c) {
+    char msg[128];
+    short Len=2;
+    int i,cnt = 0;
+    unsigned short nEnd = PEND;
+
+    if(c==NULL) return;
+
+    msg[Len]=PK_SKILL_INFO;
+    Len += 2;
+
+    for(i=0;i<4;i++) { // 스킬 총 수만큼 루프
+        if(c->skill[i]>0) {
+            msg[Len] = i;
+            Len += 1;
+
+            memcpy(&msg[Len], &c->skill[i], 2);
+            Len += 2;
+
+            msg[Len] = c->skill_lv[i];
+            Len += 1;
+            cnt += 1;
+        }
+    }
+    msg[3] = cnt;
+    memcpy(&msg[Len], &nEnd, 2);
+    Len += 2;
+    
+    memcpy(&msg[0], &Len, 2);
+    map_pData_snd(c, msg, Len);
 }
 
 extern int thr_beforeAuth(char *dat, type_session *c, void *conn, int udpsock) {

@@ -20,7 +20,9 @@ enum {
    PK_USER_CHAT=10,PK_USER_INFO,
    PK_REQ_LOC=20,
    PK_CMD_MV=30,PK_USER_MV, PK_USER_DISCON,
-   PK_OBJ_ADD=40
+   PK_OBJ_ADD=40, 
+   PK_INVEN_INFO, 
+   PK_SKILL_INFO
 };
 
 /*obj status

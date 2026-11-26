@@ -7,3 +7,4 @@ void db_load_expList(void *con);
 void db_load_skillList(void *con);
 
 int db_user_auth(char *userid, char *passwd, int passlen, void *conn, type_session *c);
+int db_chk_lvup(void * ch,void * con);

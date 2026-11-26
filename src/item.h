@@ -24,3 +24,6 @@ void item_3x3_sectorinfo(type_session *c);
 
 unsigned short item_get_attack(unsigned short item_no);
 unsigned short item_get_defense(unsigned short item_no);
+unsigned short item_get_range(unsigned short item_no);
+
+short map_ret_chrdist(unsigned short x, unsigned short y,unsigned short idx);

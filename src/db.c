@@ -372,3 +372,8 @@ extern int db_user_auth(char *userid, char *passwd, int passlen, void *conn, typ
         return 0;
     }
 }
+
+extern int db_chk_lvup(void * ch,void * con)
+{
+    return 0;
+}

@@ -31,9 +31,17 @@ typedef struct npc_baseinfo
     unsigned short		Gx;
     unsigned short		Gy;
 
+    short		level;
+    short					HP;
+    unsigned short		DP;
+
+    unsigned short		EXP;
+
     unsigned short status;
     unsigned short		mvstatus;
 
+    unsigned short		targetNO;
+    void			*		targetChr;
     char					tgFlag;
 
     unsigned short		move_F_cnt;
@@ -59,3 +67,7 @@ void npc_3x3_sectorinfo(type_session *c);
 void npc_chr_mv_addinfo(type_session *c);
 
 void * Thread_npc_sync(void *arg);
+
+int npc_ret_dist(unsigned short x, unsigned short y, unsigned short idx);
+short npc_chr_attack_npc(void * chr, unsigned short Index,void * conn);
+short npc_drop_item(type_npc * npc, unsigned short userNo);

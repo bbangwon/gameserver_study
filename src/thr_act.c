@@ -86,7 +86,7 @@ static void thr_skillinfo(type_session *c) {
 
 extern void thr_party_info(type_session * c)
 {
-    
+
 }
 
 extern int thr_beforeAuth(char *dat, type_session *c, void *conn, int udpsock) {
@@ -292,10 +292,10 @@ extern int thr_beforeAuth(char *dat, type_session *c, void *conn, int udpsock) {
 }
 
 extern int main_act(char *dat, short pLen, type_session *c, void *conn, int udpsock) {
-    int rLen=2, res;
+    int rLen=2, res, range;
     char mesg[MAX_PACKET_SIZE];
     unsigned short nEnd = PEND;
-    unsigned short Ax, Az, headercd;
+    unsigned short headercd, idx;
     short Tx,Ty;
     unsigned char DIR;
     
@@ -353,7 +353,31 @@ extern int main_act(char *dat, short pLen, type_session *c, void *conn, int udps
             if(res==1){
                 map_usersend_All(c->Ax, c->Ay, mesg, rLen, NULL);
             }
-            break;         
+            break;
+        case PK_ATTACK:
+            if(c->userStat == S_DIE) return 0;
+
+            if(c->eq[2]==0) range=1; //무기 없음. 오른손만 체크 무조건 공격거리 1
+            else range=item_get_range(c->eq[2]);
+
+            if(dat[3] == 0) { //유저
+                memcpy(&idx, &dat[4], 2);
+                res = map_ret_chrdist(c->Cx, c->Cy, idx);
+            } else {
+                memcpy(&idx, &dat[4], 2);
+                if(idx>=_MAX_MONSTER_NO) return 0;
+                res = npc_ret_dist(c->Cx, c->Cy, idx);
+            }
+            if(range<res||res==-1) return res;
+            if(c->attack_F_cnt==-1){ //공격 가능
+                if(dat[3]==0){ //유저
+                    res=session_attack_chr(c,idx,conn);
+                }else {
+                    res=npc_chr_attack_npc(c, idx, conn);
+                }
+                return res;
+            }else return 0;
+            break;
     }
 
 }

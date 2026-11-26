@@ -32,7 +32,9 @@ enum {
    PK_OBJ_ADD=40, 
    PK_INVEN_INFO, 
    PK_SKILL_INFO,
-   PK_OBJ_UPDATE_ACT
+   PK_OBJ_UPDATE_ACT, 
+   PK_ATTACK,
+   PK_LEVELUP
 };
 
 /*obj type
@@ -49,6 +51,7 @@ enum {S_STAND,	S_MOVE,	S_FIGHT,	S_TRADE, S_DIE, S_RET, S_REGEN, S_REMOVE};
 
 extern pthread_mutex_t 		synclock;
 extern pthread_cond_t		synccond;
+extern pthread_mutex_t 		npclock;
 
 #define AFRAME	900000/GAME_FRAME
 #define _ONE_SEC	GAME_FRAME

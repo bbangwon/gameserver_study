@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "db.h"
 #include "npc.h"
 #include "map.h"
 #include "publicInc.h"
@@ -307,5 +308,192 @@ extern int npc_mv_one(type_npc * npc)   //한칸만 이동
 
 extern void npc_mv_addinfo(type_npc * npc)
 {
-    
+
+}
+
+extern int npc_ret_dist(unsigned short x, unsigned short y, unsigned short idx)
+{
+    return 0;
+}
+
+extern short npc_chr_attack_npc(void * chr, unsigned short Index,void * conn)
+{
+    int rLen = 2;
+    short result = 0, wasLVup = 0;
+    short DaMaGe;
+    int exp=0,coin=0;
+    type_session *c, *mc, *pc;
+    char mesg[32];
+    unsigned short nEnd = PEND;
+    int pt0, pt1, pt2;
+
+    c = (type_session *)chr;
+    if(Index>_MAX_MONSTER_NO) return 0;
+    if(npcArray[Index]->div == 1) return 1;
+    if(npcArray[Index]->status == S_DIE) return 0; //이미 죽은 몬스터
+
+    pthread_mutex_lock(&npclock);
+    npcArray[Index]->targetNO = c->userNo;
+    npcArray[Index]->targetChr = c;
+    npcArray[Index]->mvstatus = 0;
+    npcArray[Index]->status = S_FIGHT;
+
+    DaMaGe = c->attack - npcArray[Index]->DP;    //데미지 기본 공식 기본 물리 공격
+    if(DaMaGe<0) DaMaGe = 1;
+
+    npcArray[Index]->HP=npcArray[Index]->HP-DaMaGe;
+
+    if(npcArray[Index]->HP<0) {
+        result = 1; // 몬스터 사망
+        npcArray[Index]->HP=0;
+        npcArray[Index]->targetNO = 0;
+        npcArray[Index]->targetChr = NULL;
+        npcArray[Index]->status = S_DIE;
+        pthread_mutex_unlock(&npclock);
+
+        exp = npcArray[Index]->EXP;
+        coin += npcArray[Index]->level*10;
+    }else {
+        pthread_mutex_unlock(&npclock);
+
+        pthread_mutex_lock(&synclock);
+        c->userStat = S_FIGHT;
+        c->tgtype = 1; //npc/usr
+        c->target = npcArray[Index];
+        c->target_id = Index;
+        c->attack_F_cnt=0;
+        pthread_mutex_unlock(&synclock);
+    }
+    mesg[rLen] = PK_OBJ_UPDATE_ACT;
+    rLen+=1;
+    mesg[rLen] = T_USER;
+    rLen+=1;
+    mesg[rLen] = 1;
+    rLen+=1;
+    memcpy(&mesg[rLen], &c->userNo, sizeof(c->userNo));
+    rLen+=2;
+    mesg[rLen]=S_FIGHT;
+    rLen+=1;
+    mesg[rLen]=c->Dir;
+    rLen+=1;
+    mesg[rLen]=T_NPC;
+    rLen+=1;
+    memcpy(&mesg[rLen], &Index, 2);
+    rLen+=2;
+    memcpy(&mesg[rLen], &npcArray[Index]->HP, 2);
+    rLen+=2;
+    if(npcArray[Index]->HP == 0) {
+        memcpy(&mesg[rLen], &c->exp, 4);
+        rLen+=4;
+    }
+    memcpy(&mesg[rLen], &nEnd, 2);
+    rLen+=2;
+    memcpy(&mesg[0], &rLen, 2);
+    map_usersend_All(c->Ax, c->Ay, mesg, rLen, NULL);
+
+    if(result==1) { //npc는 죽으면서 아이템을 만든다.
+        npc_drop_item(npcArray[Index], c->userNo);
+
+        if(c->party.flag==1) { //파티중이면 경험치 공유
+            if(c->party.ison1==2) //자신이 파티장일때
+            {
+                coin = coin / c->party.cnt;
+                exp = exp / c->party.cnt;
+                mc=c;
+            } else {
+                mc=(type_session *)c->party.master;
+                if(mc==NULL) return 0;
+                coin = coin / c->party.cnt;
+                exp = exp / c->party.cnt;
+            }
+            pthread_mutex_lock(&synclock);
+            mc->coin += coin;
+            mc->exp += exp;
+            pt0=db_chk_lvup(mc,conn);
+
+            if(mc->party.ison2==1){
+                pc=(type_session *)mc->party.mem2;
+                if(pc==NULL) {
+                    pthread_mutex_unlock(&synclock);
+                    return 0;
+                }
+                pc->coin+=coin;
+                pc->exp+=exp;
+                pt1=db_chk_lvup(pc,conn);
+            }
+            if(mc->party.ison3==1) {
+                pc=(type_session *)mc->party.mem3;
+                if(pc==NULL){
+                    pthread_mutex_unlock(&synclock);
+                    return 0;
+                }
+                pc->coin+=coin;
+                pc->exp+=exp;
+                pt2=db_chk_lvup(pc,conn);
+            }
+            pthread_mutex_unlock(&synclock);
+
+            if(pt0==1) {
+                rLen = 2;
+                mesg[rLen] = PK_LEVELUP;
+                rLen+=1;
+                mesg[rLen] = mc->level;
+                rLen+=1;
+                memcpy(&mesg[rLen], &nEnd, 2);
+                rLen+=2;
+                memcpy(&mesg[0], &rLen, 2);
+                map_pData_snd(mc, mesg, rLen);
+            }
+            if(pt1==1) {
+                pc=(type_session *)mc->party.mem2;
+                if(pc==NULL) return 0;
+                rLen = 2;
+                mesg[rLen] = PK_LEVELUP;
+                rLen+=1;
+                mesg[rLen] = pc->level;
+                rLen+=1;
+                memcpy(&mesg[rLen], &nEnd, 2);
+                rLen+=2;
+                memcpy(&mesg[0], &rLen, 2);
+                map_pData_snd(pc, mesg, rLen);
+            }
+            if(pt2==1) {
+                pc=(type_session *)mc->party.mem3;
+                if(pc==NULL) return 0;
+                rLen = 2;
+                mesg[rLen] = PK_LEVELUP;
+                rLen+=1;
+                mesg[rLen] = pc->level;
+                rLen+=1;
+                memcpy(&mesg[rLen], &nEnd, 2);
+                rLen+=2;
+                memcpy(&mesg[0], &rLen, 2);
+                map_pData_snd(pc, mesg, rLen);
+            }
+        } else {
+            pthread_mutex_lock(&synclock);
+            c->coin += coin;
+            c->exp += exp;
+            wasLVup = db_chk_lvup(c, conn);
+            pthread_mutex_unlock(&synclock);
+
+            if(wasLVup==1) {
+                rLen = 2;
+                mesg[rLen] = PK_LEVELUP;
+                rLen+=1;
+                mesg[rLen] = c->level;
+                rLen+=1;
+                memcpy(&mesg[rLen], &nEnd, 2);
+                rLen+=2;
+                memcpy(&mesg[0], &rLen, 2);
+                map_pData_snd(c, mesg, rLen);
+            }           
+        }
+    }
+    return 1;   
+}
+
+extern short npc_drop_item(type_npc * npc, unsigned short userNo)
+{
+    return 0;
 }

@@ -54,3 +54,7 @@ extern int session_set_userid(type_session *c, char *msg, int len) {
     c->uLen = len;
     return 1;
 }
+
+extern short session_attack_chr(type_session * c,unsigned short Index,void * conn) {
+    return 0;
+}

@@ -38,3 +38,11 @@ extern unsigned short item_get_attack(unsigned short item_no) {
 extern unsigned short item_get_defense(unsigned short item_no) {
     return 0;
 }
+
+extern unsigned short item_get_range(unsigned short item_no) {
+    return 0;
+}
+
+extern short map_ret_chrdist(unsigned short x, unsigned short y,unsigned short idx) {
+    return 0;
+}

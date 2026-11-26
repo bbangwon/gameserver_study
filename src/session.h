@@ -141,3 +141,4 @@ type_session* session_create(int sock, unsigned int addr, unsigned short port);
 void session_clear(type_session  * c);
 
 int session_set_userid(type_session *c, char *msg, int len);
+short session_attack_chr(type_session * c,unsigned short Index,void * conn);

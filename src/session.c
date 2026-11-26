@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+
 #include "session.h"
+#include "map.h"
 #include "publicInc.h"
 
 static t_sessionArray sess_array[MAXUSERNUM];
@@ -56,5 +58,56 @@ extern int session_set_userid(type_session *c, char *msg, int len) {
 }
 
 extern short session_attack_chr(type_session * c,unsigned short Index,void * conn) {
-    return 0;
+    int rLen=2;
+    short result=0, wasLVup=0;
+    short DaMaGe;
+    short exp=0;
+    char mesg[32];
+    unsigned short nEnd = PEND;
+
+    if(Index>MAXUSERNUM) return 0;
+    if(sess_array[Index].flag == 0) return 0; //없는 유저
+    if(sess_array[Index].s.userStat==S_DIE) return 0; //죽은 유저
+
+    pthread_mutex_lock(&synclock);
+    DaMaGe = c->attack-sess_array[Index].s.defense; //데미지 기본 공식 기본 물리공격
+
+    if(DaMaGe<=0) DaMaGe = 1;
+
+    sess_array[Index].s.hp_c=sess_array[Index].s.hp_c-DaMaGe;
+
+    if(sess_array[Index].s.hp_c<=0) {
+        result = 1;
+        sess_array[Index].s.hp_c = 0;
+        sess_array[Index].s.userStat = S_DIE; //죽은 상태로 변경
+        c->userStat = S_STAND;
+        c->attack_F_cnt = 0;
+    }
+    pthread_mutex_unlock(&synclock);
+
+    mesg[rLen] = PK_OBJ_UPDATE_ACT;
+    rLen+=1;
+    mesg[rLen] = T_USER;
+    rLen+=1;
+    mesg[rLen] = 1;
+    rLen+=1;
+    memcpy(&mesg[rLen], &c->userNo, 2);
+    rLen+=2;
+    mesg[rLen] = S_FIGHT;
+    rLen+=1;
+    mesg[rLen] = c->Dir;
+    rLen+=1;
+    mesg[rLen]=T_USER;
+    rLen+=1;
+    memcpy(&mesg[rLen], &Index, 2);
+    rLen+=2;
+    memcpy(&mesg[rLen], &sess_array[Index].s.hp_c, 2);
+    rLen+=2;
+    memcpy(&mesg[rLen], &nEnd, 2);
+    rLen+=2;
+    memcpy(&mesg[0], &rLen, 2);
+    map_usersend_All(c->Ax, c->Ay, mesg, rLen, NULL);
+
+    return 1;
+
 }

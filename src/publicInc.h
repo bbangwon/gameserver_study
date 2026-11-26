@@ -11,6 +11,8 @@
 
 #define MAX_PACKET_SIZE 0x400
 
+#define _MAX_MONSTER_NO 21
+
 
 /*packet end marker*/
 #define PEND 0xC8D1

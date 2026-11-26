@@ -15,14 +15,30 @@ typedef struct npc_baseinfo
 {
     unsigned short npc_id;
 
-    short Ax;
-    short Ay;
+	unsigned short x;
+	unsigned short y;
+	unsigned short dx;
+	unsigned short dy;
+
+    unsigned short		Gx;
+    unsigned short		Gy;
+
+    unsigned short status;
+
+    unsigned short		mvstatus;
+
+    unsigned short		move_F_cnt;
+    unsigned short		rotate_F_cnt;
+    unsigned short		ret_F_cnt;
 
 
 } type_npc;
 
 void npc_set_def(char div, short no, char gtype, char level, char speed);
 void npc_set(char div, short no, char x, char y);
+void npc_mv_set(unsigned short idx);
 
 void npc_3x3_sectorinfo(type_session *c);
 void npc_chr_mv_addinfo(type_session *c);
+
+void * Thread_npc_sync(void *arg);

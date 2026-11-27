@@ -538,3 +538,11 @@ extern void map_get_sectorinfo(type_session *c) {
 extern void map_usersend_All(unsigned short mapSizeX, unsigned short mapSizeZ, char *retdata, int len, type_session *c)
 {
 }
+
+extern short map_ret_dist(unsigned short x, unsigned short y, unsigned short xx, unsigned short yy){
+
+}
+
+extern void * map_ret_Activ_tg(unsigned short npcx, unsigned short npcy,unsigned short sight){
+    
+}

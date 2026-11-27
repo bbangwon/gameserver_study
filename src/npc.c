@@ -45,98 +45,151 @@ extern void npc_chr_mv_addinfo(type_session *c) {
 
 void * Thread_npc_sync(void *arg){
     int i,j;
+    type_session * tgChr;
+    type_npc * tmpNpc;
     short rotate_time = GAME_FRAME*5;
-    short Rest = 0,torf=0;
+    short Rest = 0,torf=0,dist=0;
     for(i=0;i<npc_cnt; i++)
     {
-        if(npcArray[i]->status == S_MOVE) { //움직이는 상태
-            if(npcArray[i]->dx!=npcArray[i]->x||npcArray[i]->dy!=npcArray[i]->y) {
-                npc_mv_set(i); //이동처리
-                continue;
-            } else { //목적지에 도착한 NPC
-                npcArray[i]->move_F_cnt = 0;
-                npcArray[i]->rotate_F_cnt = 0;
+        if(npcArray[i]->status == S_FIGHT) {
+            tgChr = (type_session *)npcArray[i]->targetChr;
+            dist=map_ret_dist(npcArray[i]->x, npcArray[i]->y, tgChr->Cx, tgChr->Cy); //npc와 캐릭터간 거리 반환
+
+            if(dist < 0) {
+                npcArray[i]->targetChr = NULL;
                 npcArray[i]->status = S_STAND;
                 npcArray[i]->mvstatus = 0;
-            }   
-        } else {
-            if(npcArray[i]->rotate_F_cnt > rotate_time){ //움직일 타이밍일때
-                npcArray[i]->ret_F_cnt+=1;
-                if(npcArray[i]->ret_F_cnt>10){ //10번 돌아다녔으면 생성된 위치로 돌아감
-                    if(i==17) printf("NPC 8 생성지점으로 되돌아가는 타이밍\n");
-                    npcArray[i]->ret_F_cnt = 0;
-                    npcArray[i]->dx = npcArray[i]->Gx;
-                    npcArray[i]->dy = npcArray[i]->Gy;
-                } else { //순회할 목적지를 찾는다.
-                    Rest+=1;
-                    if(Rest>7) Rest=0;
-                    switch(Rest) {
-                        case 0:
-                            npcArray[i]->dx = npcArray[i]->x-5;
-                            npcArray[i]->dy = npcArray[i]->y;
-                            break;
-                        case 1:
-                            npcArray[i]->dx = npcArray[i]->x-5;
-                            npcArray[i]->dy = npcArray[i]->y+5;
-                            break;
-                        case 2:
-                            npcArray[i]->dx = npcArray[i]->x+5;
-                            npcArray[i]->dy = npcArray[i]->y-5;
-                            break;
-                        case 3:
-                            npcArray[i]->dx = npcArray[i]->x-5;
-                            npcArray[i]->dy = npcArray[i]->y-5;
-                            break;
-                        case 4:
-                            npcArray[i]->dx = npcArray[i]->x+5;
-                            npcArray[i]->dy = npcArray[i]->y+5;
-                            break;
-                        case 5:
-                            npcArray[i]->dx = npcArray[i]->x;
-                            npcArray[i]->dy = npcArray[i]->y-5;
-                            break;
-                        case 6:
-                            npcArray[i]->dx = npcArray[i]->x+5;
-                            npcArray[i]->dy = npcArray[i]->y;
-                            break;
-                        case 7:
-                            npcArray[i]->dx = npcArray[i]->x;
-                            npcArray[i]->dy = npcArray[i]->y+5;
-                            break;
-                    }
-                }
-                j=0;
-                while(1) {
-                    torf = map_isgo(npcArray[i]->dx, npcArray[i]->dy); //이동 가능 지역 찾기
-                    if(torf==0) { //이동 가능
-                        if(i==17) printf("%d번 NPC가 이동 세팅이 됨 현재: %d, %d 목표지점: %d, %d\n", i, npcArray[i]->x, npcArray[i]->y, npcArray[i]->dx, npcArray[i]->dy);
-                        npcArray[i]->status = S_MOVE;
-                        npcArray[i]->mvstatus = 0;
-                        break; // 이동 가능하면 while문 탈출
-                    } else { //이동 불가
-                        if(npcArray[i]->dx>=M_SIZE_X) npcArray[i]->dx = npcArray[i]->dx+5;
-                        else if(npcArray[i]->dy>=M_SIZE_X) npcArray[i]->dy = npcArray[i]->dy+5;
-                        else {
-                            npcArray[i]->dx = npcArray[i]->dx+5;
-                            npcArray[i]->dy = npcArray[i]->dy+5;
-                        }
-                        if(i==17) printf("%d번 NPC가 이동 불가라서 목표지점 다시 찾음 현재: %d, %d 목표지점 %d, %d\n", i, npcArray[i]->x, npcArray[i]->y, npcArray[i]->dx, npcArray[i]->dy);                        
-                    }
-                    if(j==20) { //무한루프 방지
-                        npcArray[i]->status = S_STAND;
-                        break;
-                    }
-                    j++;
-                }
+                continue;
+            }
 
-                if(npcArray[i]->dx==npcArray[i]->x && npcArray[i]->dy==npcArray[i]->y) {
-                    npcArray[i]->status = S_STAND;
-                } else {
+            if(npcArray[i]->tgLen>=dist) {
+                //타격 거리 내에 있으므로 타격한다.
+                if(npcArray[i]->heat_F_cnt>=_ONE_SEC){
+                    npc_attack_chr(tgChr, i); //공격
+                    npcArray[i]->move_F_cnt = 0;
+                    npcArray[i]->heat_F_cnt = 0;
+                    npcArray[i]->wait_F_cnt = 0;
                     npcArray[i]->mvstatus = 0;
-                    npcArray[i]->status = S_MOVE;
+                } else npcArray[i]->heat_F_cnt++;                
+            } else if(dist<_NPC_TGT_SIG) { // 추격 범위 내에 있을 경우
+                npc_mv_set(i);
+                continue;
+            } else { //타겟이 시야에서 사라졌을 때
+                npcArray[i]->status = S_STAND;
+                npcArray[i]->mvstatus = 0;
+                npcArray[i]->tgFlag = 0;
+            }
+            continue;
+        } else {
+            if(npcArray[i]->bat_type == T_ACTIVE) {
+                //선공하는 몬스터의 처리(해당 사항 있으면 행동하고, 아니면 인공지능)
+                if((npcArray[i]->targetChr = map_ret_Activ_tg(npcArray[i]->x, npcArray[i]->y, npcArray[i]->Sight)) != NULL){
+                    //근처에 타겟이 있있을때 전투 모드로 들어간다.
+                    tgChr = (type_session *)npcArray[i]->targetChr;
+                    npcArray[i]->targetNO = tgChr->userNo;
+                    npcArray[i]->status = S_FIGHT;
+                    npcArray[i]->tgFlag = 1;
+                    continue;
                 }
-                npcArray[i]->rotate_F_cnt = 0;               
-            } else npcArray[i]->rotate_F_cnt++;
+            } else if(npcArray[i]->bat_type == T_GROUP){
+                //집단형 npc(선공은 아니지만 주위에서 싸우면 같이 가서 싸움)
+                if((tmpNpc=npc_ret_fight(i)) != NULL) {
+                    npcArray[i]->targetNO = tmpNpc->targetNO;
+                    npcArray[i]->targetChr = tmpNpc->targetChr;
+                    npcArray[i]->status = S_FIGHT;
+                    npcArray[i]->tgFlag=1;
+                }
+            }
+
+            if(npcArray[i]->status == S_MOVE) { //움직이는 상태
+                if(npcArray[i]->dx!=npcArray[i]->x||npcArray[i]->dy!=npcArray[i]->y) {
+                    npc_mv_set(i); //이동처리
+                    continue;
+                } else { //목적지에 도착한 NPC
+                    npcArray[i]->move_F_cnt = 0;
+                    npcArray[i]->rotate_F_cnt = 0;
+                    npcArray[i]->status = S_STAND;
+                    npcArray[i]->mvstatus = 0;
+                }   
+            } else {
+                if(npcArray[i]->rotate_F_cnt > rotate_time){ //움직일 타이밍일때
+                    npcArray[i]->ret_F_cnt+=1;
+                    if(npcArray[i]->ret_F_cnt>10){ //10번 돌아다녔으면 생성된 위치로 돌아감
+                        if(i==17) printf("NPC 8 생성지점으로 되돌아가는 타이밍\n");
+                        npcArray[i]->ret_F_cnt = 0;
+                        npcArray[i]->dx = npcArray[i]->Gx;
+                        npcArray[i]->dy = npcArray[i]->Gy;
+                    } else { //순회할 목적지를 찾는다.
+                        Rest+=1;
+                        if(Rest>7) Rest=0;
+                        switch(Rest) {
+                            case 0:
+                                npcArray[i]->dx = npcArray[i]->x-5;
+                                npcArray[i]->dy = npcArray[i]->y;
+                                break;
+                            case 1:
+                                npcArray[i]->dx = npcArray[i]->x-5;
+                                npcArray[i]->dy = npcArray[i]->y+5;
+                                break;
+                            case 2:
+                                npcArray[i]->dx = npcArray[i]->x+5;
+                                npcArray[i]->dy = npcArray[i]->y-5;
+                                break;
+                            case 3:
+                                npcArray[i]->dx = npcArray[i]->x-5;
+                                npcArray[i]->dy = npcArray[i]->y-5;
+                                break;
+                            case 4:
+                                npcArray[i]->dx = npcArray[i]->x+5;
+                                npcArray[i]->dy = npcArray[i]->y+5;
+                                break;
+                            case 5:
+                                npcArray[i]->dx = npcArray[i]->x;
+                                npcArray[i]->dy = npcArray[i]->y-5;
+                                break;
+                            case 6:
+                                npcArray[i]->dx = npcArray[i]->x+5;
+                                npcArray[i]->dy = npcArray[i]->y;
+                                break;
+                            case 7:
+                                npcArray[i]->dx = npcArray[i]->x;
+                                npcArray[i]->dy = npcArray[i]->y+5;
+                                break;
+                        }
+                    }
+                    j=0;
+                    while(1) {
+                        torf = map_isgo(npcArray[i]->dx, npcArray[i]->dy); //이동 가능 지역 찾기
+                        if(torf==0) { //이동 가능
+                            if(i==17) printf("%d번 NPC가 이동 세팅이 됨 현재: %d, %d 목표지점: %d, %d\n", i, npcArray[i]->x, npcArray[i]->y, npcArray[i]->dx, npcArray[i]->dy);
+                            npcArray[i]->status = S_MOVE;
+                            npcArray[i]->mvstatus = 0;
+                            break; // 이동 가능하면 while문 탈출
+                        } else { //이동 불가
+                            if(npcArray[i]->dx>=M_SIZE_X) npcArray[i]->dx = npcArray[i]->dx+5;
+                            else if(npcArray[i]->dy>=M_SIZE_X) npcArray[i]->dy = npcArray[i]->dy+5;
+                            else {
+                                npcArray[i]->dx = npcArray[i]->dx+5;
+                                npcArray[i]->dy = npcArray[i]->dy+5;
+                            }
+                            if(i==17) printf("%d번 NPC가 이동 불가라서 목표지점 다시 찾음 현재: %d, %d 목표지점 %d, %d\n", i, npcArray[i]->x, npcArray[i]->y, npcArray[i]->dx, npcArray[i]->dy);                        
+                        }
+                        if(j==20) { //무한루프 방지
+                            npcArray[i]->status = S_STAND;
+                            break;
+                        }
+                        j++;
+                    }
+
+                    if(npcArray[i]->dx==npcArray[i]->x && npcArray[i]->dy==npcArray[i]->y) {
+                        npcArray[i]->status = S_STAND;
+                    } else {
+                        npcArray[i]->mvstatus = 0;
+                        npcArray[i]->status = S_MOVE;
+                    }
+                    npcArray[i]->rotate_F_cnt = 0;               
+                } else npcArray[i]->rotate_F_cnt++;
+            }
         }
     }
 }
@@ -602,4 +655,13 @@ extern short npc_drop_item(type_npc * npc, unsigned short userNo)
     memcpy(&data[0], &dLen, 2);
     map_usersend_All(npc->ARx, npc->ARy, data, dLen, NULL);
     return 1;
+}
+
+extern void npc_attack_chr(void * chrr, unsigned short idx)
+{
+
+}
+
+extern type_npc * npc_ret_fight(unsigned short idx){
+    return NULL;
 }

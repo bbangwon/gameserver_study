@@ -37,6 +37,8 @@ typedef struct npc_baseinfo
 
     unsigned short		EXP;
 
+    char					bat_type;
+
     unsigned short status;
     unsigned short		mvstatus;
 
@@ -44,9 +46,14 @@ typedef struct npc_baseinfo
     void			*		targetChr;
     char					tgFlag;
 
+    unsigned short		Sight;
+    unsigned short		tgLen;
+
     unsigned short		move_F_cnt;
+    unsigned short		heat_F_cnt;
     unsigned short		rotate_F_cnt;
     unsigned short		ret_F_cnt;
+    unsigned short		wait_F_cnt;
 
 
 } type_npc;
@@ -59,15 +66,21 @@ type_npcmap;
 
 void npc_set_def(char div, short no, char gtype, char level, char speed);
 void npc_set(char div, short no, char x, char y);
+
 void npc_mv_set(unsigned short idx);
 int npc_mv_one(type_npc * npc);
-void npc_mv_addinfo(type_npc * npc);
 
 void npc_3x3_sectorinfo(type_session *c);
+void npc_mv_addinfo(type_npc * npc);
 void npc_chr_mv_addinfo(type_session *c);
 
 void * Thread_npc_sync(void *arg);
 
+void npc_attack_chr(void * chrr, unsigned short idx);
+type_npc * npc_ret_fight(unsigned short idx);
 int npc_ret_dist(unsigned short x, unsigned short y, unsigned short idx);
+
 short npc_chr_attack_npc(void * chr, unsigned short Index,void * conn);
 short npc_drop_item(type_npc * npc, unsigned short userNo);
+
+

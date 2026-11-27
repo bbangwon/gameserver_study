@@ -12,7 +12,8 @@
 #define MAX_PACKET_SIZE 0x400
 
 #define _MAX_MONSTER_NO 21
-
+#define _NPC_TGT_SIG 	8
+enum {T_ACTIVE, T_PASSIVE ,T_GROUP};
 #define NPC_MV_FRAME		0x0D
 
 

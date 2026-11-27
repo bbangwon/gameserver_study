@@ -1,5 +1,6 @@
 #pragma once
 #include "session.h"
+#include "objlist.h"
 
 typedef struct item {
     char is_init;
@@ -15,6 +16,11 @@ typedef struct item {
     unsigned short coin; //가격
     char isbuy; //구입 가능 여부
 } type_item;
+
+typedef struct itemsector
+{
+	type_objlist *	objL;
+} type_itemSect;
 
 typedef struct fItem 
 {
@@ -32,16 +38,18 @@ typedef struct fItem
 void item_init();
 void item_load(type_item *item);
 
-void item_part_sectorinfo(type_session *c);
-void item_3x3_sectorinfo(type_session *c);
-
 unsigned short item_get_attack(unsigned short item_no);
 unsigned short item_get_defense(unsigned short item_no);
 unsigned short item_get_range(unsigned short item_no);
 
-short map_ret_chrdist(unsigned short x, unsigned short y,unsigned short idx);
-short item_ret_default_cnt(unsigned short idx);
 unsigned int retNullitemIdx();
+void resetitemIdx(int idx);
 void setitemIdx(int idx);
-
 type_itemLst_field * item_add_sect(unsigned short x, unsigned short y, type_itemLst_field * fitem);
+void item_rm_sect(type_itemLst_field * fitem);
+
+void item_part_sectorinfo(type_session *c);
+void item_3x3_sectorinfo(type_session *c);
+
+short item_ret_default_cnt(unsigned short idx);
+

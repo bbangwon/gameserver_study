@@ -17,3 +17,7 @@ extern int insert_node_objlist(type_objlist **target_objlist, type_objlist *sour
     return 1;
 }
 
+extern int rm_objlist(type_objlist **objlist) {
+    return 1;
+}
+

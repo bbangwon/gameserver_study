@@ -544,5 +544,9 @@ extern short map_ret_dist(unsigned short x, unsigned short y, unsigned short xx,
 }
 
 extern void * map_ret_Activ_tg(unsigned short npcx, unsigned short npcy,unsigned short sight){
-    
+
+}
+
+extern short map_ret_chrdist(unsigned short x, unsigned short y,unsigned short idx) {
+    return 0;
 }

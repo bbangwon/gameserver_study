@@ -20,4 +20,5 @@ int map_char_one_mv(type_session * c,unsigned short x,unsigned short y);
 void map_bk_sectorinfo(type_session *c);
 void map_get_sectorinfo(type_session *c);
 short map_ret_dist(unsigned short x, unsigned short y, unsigned short xx, unsigned short yy);
+short map_ret_chrdist(unsigned short x, unsigned short y,unsigned short idx);
 void * map_ret_Activ_tg(unsigned short npcx, unsigned short npcy,unsigned short sight);

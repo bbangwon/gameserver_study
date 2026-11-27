@@ -39,6 +39,7 @@ enum {
    
    PK_OBJ_ADD=40, 
    PK_OBJ_REMOVE,
+   PK_OBJ_UPDATE_EQUI,
    
    PK_INVEN_INFO, 
    PK_SKILL_INFO,
@@ -46,7 +47,11 @@ enum {
    PK_ATTACK,
    PK_LEVELUP,
    PK_ITEM_DROP,
-   PK_ITEM_PICK
+   PK_ITEM_PICK,
+   PK_ITEM_POS,
+   PK_ITEM_WEAR,
+   PK_WARE_DEPOS,
+   PK_WARE_POS
 };
 
 /*obj type

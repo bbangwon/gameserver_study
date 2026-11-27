@@ -65,4 +65,11 @@ void item_3x3_sectorinfo(type_session *c);
 short item_ret_default_cnt(unsigned short idx);
 void item_pick(char * data, void * chrr);
 short item_drop(void * chr,char * msg);
+short item_pos(void * chr,char * msg);
+short item_wear(void * chr,char * msg);
+
+void item_recal_stat(void * chr);
+
+void item_ware_pos(void * chr,char * dat);
+void item_ware_depos(void * chr,char * dat);
 

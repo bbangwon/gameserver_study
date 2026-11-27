@@ -50,6 +50,8 @@ enum {
    PK_ITEM_PICK,
    PK_ITEM_POS,
    PK_ITEM_WEAR,
+   PK_ITEM_BUY,
+   PK_ITEM_SELL,
    PK_WARE_DEPOS,
    PK_WARE_POS
 };

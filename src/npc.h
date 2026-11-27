@@ -84,4 +84,6 @@ int npc_ret_dist(unsigned short x, unsigned short y, unsigned short idx);
 short npc_chr_attack_npc(void * chr, unsigned short Index,void * conn);
 short npc_drop_item(type_npc * npc, unsigned short userNo);
 
+int npc_dist_chk(type_session *c);
+
 

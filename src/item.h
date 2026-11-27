@@ -63,6 +63,8 @@ void item_part_sectorinfo(type_session *c);
 void item_3x3_sectorinfo(type_session *c);
 
 short item_ret_default_cnt(unsigned short idx);
+void item_buy(char * data,void * se);
+void item_sell(char * data,void * se);
 void item_pick(char * data, void * chrr);
 short item_drop(void * chr,char * msg);
 short item_pos(void * chr,char * msg);

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/time.h>
 
+#include "npc.h"
 #include "map.h"
 #include "item.h"
 #include "publicInc.h"
@@ -628,4 +629,120 @@ extern void item_ware_pos(void * chr,char * dat){
 
 extern void item_recal_stat(void * chr){
 
+}
+
+extern void item_buy(char * data,void * se){
+    unsigned char amount;
+    unsigned short itemNo, tmp, nLen;
+    int res=0, i, ckk;
+    type_session *c;
+    short Len=2;
+    char msg[32];
+    unsigned short nEnd=PEND;
+
+    c=(type_session *)se;
+    nLen=npc_dist_chk(c); //상점 NPC와의 거리 체크
+    memcpy(&itemNo, &data[3], 2);
+    amount=data[5];
+
+    if(amount==0||itemNo==0||itemNo>=_MAX_DEFAULT_ITEM||nLen>15){
+        res = 1;
+    } else if(amount>_MAX_ITEM_DUP) {
+        res = 2;
+    } else if(amount>1) {
+        if(itemNo>_ITEM_DUP_NO_RANGE) res=3;
+    }
+    if(res==0 && item0[itemNo].isbuy==0) res=4;
+    tmp = item0[itemNo].coin * amount;
+    if(res==0 && c->coin < tmp) res=5;
+
+    for(i=0,ckk=0;i<4;i++){
+        if(c->inven[i]==0){
+            ckk=1;
+            break;
+        }
+    }
+    if(res==0 && ckk==0) res=6;
+    if(res==0){
+        pthread_mutex_lock(&synclock);
+        c->inven[i] = itemNo;
+        c->inven_cnt[i] = amount;
+        c->coin -= tmp;
+        pthread_mutex_unlock(&synclock);
+    }
+    msg[Len] = PK_ITEM_BUY;
+    Len+=1;
+    msg[Len] = res;
+    Len+=1;
+    memcpy(&msg[Len],&itemNo, 2);
+    Len+=2;
+    msg[Len] =amount;
+    Len+=1;
+    msg[Len]=i;
+    Len+=1;
+    memcpy(&msg[Len], &nEnd, 2);
+    Len+=2;
+    memcpy(&msg[0], &Len, 2);
+    map_pData_snd(c, msg, Len);
+}
+
+extern void item_sell(char * data,void * se){
+    unsigned char amount, tot, idx=0;
+    unsigned short itemNo;
+    int res=0, i, j;
+    type_session *c;
+    short Len=2;
+    char msg[32];
+    unsigned short nEnd=PEND;
+
+    c=(type_session *)se;
+
+    tot=data[5];
+    for(i=0,j=4;i<tot;i++){
+        idx=data[j];
+        if(idx>4) {
+            res=1;
+            break;
+        }
+        j+=1;
+        amount=data[j];
+        j+=1;
+        if(c->inven[idx]>=_MAX_DEFAULT_ITEM||c->inven[idx]==0||
+        c->inven_cnt[idx]<amount||amount==0){
+            res=2;
+            break;            
+        }        
+    }
+    msg[Len] = PK_ITEM_SELL;
+    Len+=1;
+    msg[Len] = res;
+    Len+=1;
+    msg[Len] = tot;
+    Len+=1;
+
+    if(res==0) {
+        pthread_mutex_lock(&synclock);
+        for(i=0,j=4;i<tot;i++){
+            idx=data[j];
+            j+=1;
+            amount=data[j];
+            j+=1;
+            itemNo=c->inven[idx];
+            c->coin += item0[itemNo].coin * amount;
+            c->inven_cnt[idx] -= amount;
+            if(c->inven_cnt[idx]==0) c->inven[idx]=0;
+
+            msg[Len]=idx;
+            Len+=1;
+            msg[Len]=c->inven_cnt[idx];
+            Len+=1;            
+        }
+        pthread_mutex_unlock(&synclock);
+    }
+    memcpy(&msg[Len], &c->coin, 4);
+    Len+=4;
+    memcpy(&msg[Len], &nEnd, 2);
+    Len+=2;
+    memcpy(&msg[0], &Len, 2);
+    map_pData_snd(c, msg, Len);
 }

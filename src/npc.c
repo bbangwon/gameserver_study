@@ -747,3 +747,7 @@ extern void npc_attack_chr(void * chrr, unsigned short idx)
 extern type_npc * npc_ret_fight(unsigned short idx){
     return NULL;
 }
+
+extern int npc_dist_chk(type_session *c){
+    return 0;
+}

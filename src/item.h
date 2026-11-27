@@ -72,6 +72,8 @@ short item_wear(void * chr,char * msg);
 
 void item_recal_stat(void * chr);
 
+short item_trade_req(void * chr,char * msg);
+
 void item_ware_pos(void * chr,char * dat);
 void item_ware_depos(void * chr,char * dat);
 

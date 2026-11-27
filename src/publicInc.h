@@ -53,7 +53,8 @@ enum {
    PK_ITEM_BUY,
    PK_ITEM_SELL,
    PK_WARE_DEPOS,
-   PK_WARE_POS
+   PK_WARE_POS,
+   PK_TRADE_REQ
 };
 
 /*obj type

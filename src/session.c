@@ -111,3 +111,7 @@ extern short session_attack_chr(type_session * c,unsigned short Index,void * con
     return 1;
 
 }
+
+extern type_session * session_ret_session(unsigned short idx){
+    return NULL;
+}

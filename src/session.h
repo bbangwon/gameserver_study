@@ -142,3 +142,5 @@ void session_clear(type_session  * c);
 
 int session_set_userid(type_session *c, char *msg, int len);
 short session_attack_chr(type_session * c,unsigned short Index,void * conn);
+
+type_session * session_ret_session(unsigned short idx);

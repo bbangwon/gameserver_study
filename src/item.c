@@ -746,3 +746,65 @@ extern void item_sell(char * data,void * se){
     memcpy(&msg[0], &Len, 2);
     map_pData_snd(c, msg, Len);
 }
+
+extern short item_trade_req(void * chr,char * msg){
+    type_session *c;
+    type_session *tc;
+
+    int res=0,i;
+    short dLen=2, dist=0;
+    char data[32];
+    unsigned short nEnd=PEND;
+    unsigned short userNo;
+
+    c=(type_session *)chr;
+    memcpy(&userNo, &msg[4], 2);
+    tc=session_ret_session(userNo);
+    if(tc==NULL) res=1;
+    else {
+        dist=map_ret_dist(c->Cx, c->Cy, tc->Cx, tc->Cy);
+        if(dist>15) res=2;
+    }
+    if(msg[3] != 0) res=3;
+    if(res==0) {
+        if(c->trade.flag == 0) {
+            pthread_mutex_lock(&synclock);
+            c->trade.flag =1;
+            c->trade.confirm=0;
+            c->trade.tg=tc;
+            c->trade.coin=0;
+            for(i=0;i<2;i++) {
+                c->trade.itemidx[i]=0;                
+            }
+            pthread_mutex_unlock(&synclock);
+        } else res=4;
+    }
+
+    data[dLen] = PK_TRADE_REQ;
+    dLen+=1;
+    data[dLen] = msg[3];
+    dLen+=1;
+    data[dLen] = res;
+    dLen+=1;
+    memcpy(&data[dLen], &userNo, 2);
+    dLen+=2;
+    memcpy(&data[dLen], &nEnd, 2);
+    dLen+=2;
+    memcpy(&data[0], &dLen, 2);
+    map_pData_snd(c, data, dLen);
+
+    if(res==0) {
+        dLen=2;
+        data[dLen]=PK_TRADE_REQ;
+        dLen+=1;
+        data[dLen] =1;
+        dLen+=1;
+        memcpy(&data[dLen], &c->userNo, 2);
+        dLen+=2;
+        memcpy(&data[dLen], &nEnd, 2);
+        dLen+=2;
+        memcpy(&data[0], &dLen, 2);
+        map_pData_snd(tc, data, dLen);
+    }
+    return 1;
+}

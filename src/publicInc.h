@@ -35,7 +35,8 @@ enum {
    PK_SKILL_INFO,
    PK_OBJ_UPDATE_ACT, 
    PK_ATTACK,
-   PK_LEVELUP
+   PK_LEVELUP,
+   PK_ITEM_DROP
 };
 
 /*obj type

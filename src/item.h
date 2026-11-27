@@ -52,4 +52,5 @@ void item_part_sectorinfo(type_session *c);
 void item_3x3_sectorinfo(type_session *c);
 
 short item_ret_default_cnt(unsigned short idx);
+short item_drop(void * chr,char * msg);
 

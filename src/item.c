@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 
+#include "map.h"
 #include "item.h"
 #include "publicInc.h"
 
@@ -125,4 +128,86 @@ extern void item_rm_sect(type_itemLst_field * fitem) {
 }
 
 extern void resetitemIdx(int idx) {
+}
+
+// 필드에 아이템 버리기
+extern short item_drop(void * chr,char * msg) {
+    type_itemLst_field *temp;
+    type_session *c;
+    unsigned int ItmNo;
+    int res = 0;
+    short dLen =2;
+    char data[32];
+    unsigned char invidx,cnt=0;
+    unsigned short nEnd = PEND;
+
+    c=(type_session *)chr;
+
+    invidx = msg[3];
+    cnt=msg[4];
+    if(invidx>4) res=1;
+    else if(c->inven_cnt[invidx] < cnt||cnt==0) res=2;
+
+    if(res==0) {
+        if(!(temp = malloc(sizeof(type_itemLst_field)))) return 0;
+        temp->rmFcnt = 0;
+        temp->rmHcnt = 0;
+
+        pthread_mutex_lock(&itemlock);
+        temp->item_idx_cnt=cnt;
+        ItmNo = retNullitemIdx();
+        setitemIdx(ItmNo);
+        temp->idx = ItmNo;
+        item_add_sect(c->Ax, c->Ay, temp);
+        temp->x=c->Cx;
+        temp->y=c->Cy;
+        temp->item_idx=c->inven[invidx];
+        pthread_mutex_unlock(&itemlock);
+
+        pthread_mutex_lock(&synclock);
+        if(cnt==c->inven_cnt[invidx]) {
+            c->inven_cnt[invidx] = 0;
+            c->inven[invidx] = 0;
+        } else {
+            c->inven_cnt[invidx] -= cnt;
+        }
+        pthread_mutex_unlock(&synclock);
+
+        data[dLen] = PK_OBJ_ADD;
+        dLen+=1;
+        data[dLen] = T_ITEM;
+        dLen+=1;
+        data[dLen] = 1;
+        dLen+=1;
+        memcpy(&data[dLen], &temp->idx,2);
+        dLen+=2;
+        memcpy(&data[dLen], &temp->x, 2);
+        dLen+=2;
+        memcpy(&data[dLen], &temp->y, 2);
+        dLen+=2;
+        memcpy(&data[dLen], &temp->item_idx, 2);
+        dLen+=2;
+        memcpy(&data[dLen], &temp->item_idx_cnt, 2);
+        dLen+=2;
+        memcpy(&data[dLen], &nEnd, 2);
+        dLen+=2;
+        memcpy(&data[0], &dLen, 2);
+        map_usersend_All(c->Ax, c->Ay, data, dLen, c);
+    }
+    dLen=2;
+    data[dLen] = PK_ITEM_DROP;
+    dLen+=1;
+    data[dLen] = res;
+    dLen+=1;
+    data[dLen] = invidx;
+    dLen+=1;
+    memcpy(&data[dLen], &c->inven[invidx], 2);
+    dLen+=2;
+    data[dLen] = c->inven_cnt[invidx];
+    dLen+=1;
+    memcpy(&data[dLen], &nEnd, 2);
+    dLen+=2;
+    memcpy(&data[0], &dLen, 2);
+    map_pData_snd(c,data,dLen);
+    return 1;
 }

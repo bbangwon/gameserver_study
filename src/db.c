@@ -373,7 +373,28 @@ extern int db_user_auth(char *userid, char *passwd, int passlen, void *conn, typ
     }
 }
 
-extern int db_chk_lvup(void * ch,void * con)
+extern int db_chk_lvup(void * cc,void * con)
 {
-    return 0;
+    type_session *c;
+    PGconn *conn;
+    // char query[256];
+    // PGresult *result;
+    
+    c=(type_session *)cc;
+    conn=(PGconn *)con;
+    if(c->level > MAXUSERLEVEL || c->level==0) return 0;
+    if(exp_list[c->level]<=c->exp) {
+        c->level+=1;
+        c->lvpoint+=1;
+        // sprintf(query, "UPDATE characters SET LV='%d', PT='%d' WHERE userid='%s'", c->level, c->lvpoint, c->userid);
+        // result = PQexec(conn, query);
+        // if(PQresultStatus(result) != PGRES_COMMAND_OK) {
+        //     printf("update lv & lvpoint error:%s\n", PQerrorMessage(conn));
+        //     PQclear(result);
+        //     return 0;
+        // }
+        // PQclear(result);
+        return 1;       
+    }else return 0;
+
 }

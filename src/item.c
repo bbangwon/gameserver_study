@@ -8,6 +8,7 @@
 #include "publicInc.h"
 
 static type_itemSect 	item_sect[S_WIDTH][S_WIDTH];
+static type_itemIdx 		itemNo[_MAX_ITEM_IDX];
 static type_item item0[_MAX_DEFAULT_ITEM]; //일반 아이템
 
 static void *voiditemlist_get_first(type_objlist const * const **save, unsigned short i, unsigned short j) {
@@ -210,4 +211,123 @@ extern short item_drop(void * chr,char * msg) {
     memcpy(&data[0], &dLen, 2);
     map_pData_snd(c,data,dLen);
     return 1;
+}
+
+extern void item_pick(char * data, void * chrr){
+    type_session *c;
+    char msg[32];
+    short Len=2;
+    unsigned char i,chk=0,res=0;
+    unsigned short idx,tmp_idx, tmp_cnt, tmpx, tmpy;
+    unsigned short nEnd = PEND;
+
+    c=(type_session *)chrr;
+    memcpy(&idx, &data[3], 2);
+    if(idx==0) return;
+    if(itemNo[idx].flag == 0) return;
+
+    tmp_idx=itemNo[idx].item->item_idx;
+    tmp_cnt=itemNo[idx].item->item_idx_cnt;
+    tmpx=itemNo[idx].item->x;
+    tmpy=itemNo[idx].item->y;
+
+    //한개 겹침 가능
+    if(itemNo[idx].item->item_idx<=_ITEM_DUP_NO_RANGE&&tmp_cnt==1) {
+        for(i=0;i<4;i++) {
+            if(c->inven[i] == tmp_idx) {
+                if(c->inven_cnt[i] < _MAX_ITEM_DUP) {
+                    pthread_mutex_lock(&itemlock);
+                    itemNo[idx].item->item_idx_cnt-=1;
+                    if(itemNo[idx].item->item_idx_cnt == 0) {
+                        itemNo[idx].item->item_idx=0;
+                        item_rm_sect(itemNo[idx].item);
+                        chk=1;
+                    } else chk=2;
+                    pthread_mutex_unlock(&itemlock);
+                    pthread_mutex_lock(&synclock);
+                    c->inven_cnt[i]+=1;
+                    pthread_mutex_unlock(&synclock);
+                    break;
+                }
+            }
+            if(c->inven[i]==0){
+                pthread_mutex_lock(&itemlock);
+                itemNo[idx].item->item_idx=0;
+                itemNo[idx].item->item_idx_cnt=0;
+                item_rm_sect(itemNo[idx].item);
+                pthread_mutex_unlock(&itemlock);
+                pthread_mutex_lock(&synclock);
+                c->inven[i]=tmp_idx;
+                c->inven_cnt[i]=1;
+                pthread_mutex_unlock(&synclock);
+                chk=1;
+                break;
+            }
+        }
+    } else {
+        for(i=0;i<4;i++) {
+            if(c->inven[i]==0) {
+                pthread_mutex_lock(&itemlock);
+                itemNo[idx].item->item_idx=0;
+                itemNo[idx].item->item_idx_cnt=0;
+                item_rm_sect(itemNo[idx].item);
+                pthread_mutex_unlock(&itemlock);
+                pthread_mutex_lock(&synclock);
+                c->inven[i]=tmp_idx;
+                c->inven_cnt[i]=tmp_cnt;
+                pthread_mutex_unlock(&synclock);
+                chk=1;
+                break;
+            }
+        }
+    }
+
+    if(chk==0) res=1;
+    msg[Len]=PK_ITEM_PICK;
+    Len+=1;
+    msg[Len]=res;
+    Len+=1;
+    memcpy(&msg[Len], &idx, 2);
+    Len+=2;
+    if(res==0){
+        msg[Len]=i;
+        Len+=1;
+        msg[Len]=c->inven_cnt[i];
+        Len+=1;
+    }
+    memcpy(&msg[Len], &nEnd, 2);
+    Len+=2;
+    memcpy(&msg[0], &Len, 2);
+    map_pData_snd(c, msg, Len);
+    if(chk == 1) {
+        item_remove_info(tmpx, tmpy, idx);
+    }
+
+}
+
+//필드 아이템 삭제 정보
+extern void item_remove_info(unsigned short x,unsigned short y,unsigned short idx){
+    char data[16];
+    short dLen = 2;
+    unsigned short nEnd = PEND;
+    unsigned short tmpx, tmpy;
+
+    data[dLen]=PK_OBJ_REMOVE;
+    dLen+=1;
+    data[dLen]=T_ITEM;
+    dLen+=1;
+    memcpy(&data[dLen], &idx, 2);
+    dLen+=2;
+    memcpy(&data[dLen], &x, 2);
+    dLen+=2;
+    memcpy(&data[dLen], &y, 2);
+    dLen+=2;
+    memcpy(&data[dLen], &nEnd, 2);
+    dLen+=2;
+    memcpy(&data[0], &dLen, 2);
+
+    tmpx = x/S_UNITSIZE;
+    tmpy = y/S_UNITSIZE;
+
+    map_usersend_All(tmpx, tmpy, data, dLen, NULL);
 }

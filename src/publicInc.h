@@ -11,8 +11,14 @@
 
 #define MAX_PACKET_SIZE 0x400
 
+#define _MAX_ITEM_IDX 0x0FF6
+
 #define _MAX_MONSTER_NO 21
 #define _NPC_TGT_SIG 	8
+
+#define _MAX_ITEM_DUP 10
+#define _ITEM_DUP_NO_RANGE 50
+
 enum {T_ACTIVE, T_PASSIVE ,T_GROUP};
 #define NPC_MV_FRAME		0x0D
 
@@ -30,13 +36,17 @@ enum {
    PK_USER_CHAT=10,PK_USER_INFO,
    PK_REQ_LOC=20,
    PK_CMD_MV=30,PK_USER_MV, PK_USER_DISCON,
+   
    PK_OBJ_ADD=40, 
+   PK_OBJ_REMOVE,
+   
    PK_INVEN_INFO, 
    PK_SKILL_INFO,
    PK_OBJ_UPDATE_ACT, 
    PK_ATTACK,
    PK_LEVELUP,
-   PK_ITEM_DROP
+   PK_ITEM_DROP,
+   PK_ITEM_PICK
 };
 
 /*obj type

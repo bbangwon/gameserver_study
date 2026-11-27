@@ -2,6 +2,26 @@
 #include "session.h"
 #include "objlist.h"
 
+typedef struct fItem 
+{
+    unsigned short		idx;
+	unsigned short 	x;
+	unsigned short		y;
+
+	unsigned short		item_idx;
+    unsigned	short		item_idx_cnt;
+
+	unsigned short		rmFcnt;
+	unsigned short		rmHcnt;
+} type_itemLst_field;
+
+typedef struct item_idx
+{
+	unsigned short 			flag;
+	type_itemLst_field	*	item;
+}
+type_itemIdx;
+
 typedef struct item {
     char is_init;
     char idx_type;  //인덱스 타입
@@ -22,18 +42,7 @@ typedef struct itemsector
 	type_objlist *	objL;
 } type_itemSect;
 
-typedef struct fItem 
-{
-    unsigned short		idx;
-	unsigned short 	x;
-	unsigned short		y;
 
-	unsigned short		item_idx;
-    unsigned	short		item_idx_cnt;
-
-	unsigned short		rmFcnt;
-	unsigned short		rmHcnt;
-} type_itemLst_field;
 
 void item_init();
 void item_load(type_item *item);
@@ -48,9 +57,12 @@ void setitemIdx(int idx);
 type_itemLst_field * item_add_sect(unsigned short x, unsigned short y, type_itemLst_field * fitem);
 void item_rm_sect(type_itemLst_field * fitem);
 
+void item_remove_info(unsigned short x,unsigned short y,unsigned short idx);
+
 void item_part_sectorinfo(type_session *c);
 void item_3x3_sectorinfo(type_session *c);
 
 short item_ret_default_cnt(unsigned short idx);
+void item_pick(char * data, void * chrr);
 short item_drop(void * chr,char * msg);
 

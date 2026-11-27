@@ -33,6 +33,7 @@ typedef struct npc_baseinfo
 
     short		level;
     short					HP;
+    unsigned short		AP;    
     unsigned short		DP;
 
     unsigned short		EXP;

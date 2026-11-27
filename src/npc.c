@@ -659,7 +659,89 @@ extern short npc_drop_item(type_npc * npc, unsigned short userNo)
 
 extern void npc_attack_chr(void * chrr, unsigned short idx)
 {
+    short DaMaGe, DIRx, DIRy, HP;
+    char mesg[64];
+    unsigned short rLen = 2;
+    unsigned short nEnd = PEND;
+    type_session *chr;
 
+    if(idx>=_MAX_MONSTER_NO) return;
+    if(chrr==NULL){
+        npcArray[idx]->status=S_STAND;
+        npcArray[idx]->dx=npcArray[idx]->Gx;
+        npcArray[idx]->dy=npcArray[idx]->Gy;
+        npcArray[idx]->targetChr = NULL;
+        npcArray[idx]->tgFlag = 0;
+        return;
+    }
+
+    if(npcArray[idx]->status==S_DIE) return;
+    chr = (type_session *)chrr;
+    if(chr->userStat == S_DIE){
+        npcArray[idx]->status = S_STAND;
+        npcArray[idx]->dx = npcArray[idx]->Gx;
+        npcArray[idx]->dy = npcArray[idx]->Gy;
+        npcArray[idx]->targetChr = NULL;
+        npcArray[idx]->tgFlag = 0;
+        return;
+    }
+    DIRx = npcArray[idx]->x - chr->Cx;
+    DIRy = npcArray[idx]->y - chr->Cy;
+
+    if(DIRx==0 && DIRy<0) npcArray[idx]->DirLoc=4; //12시방향
+    else if(DIRx<0 && DIRy<0) npcArray[idx]->DirLoc=3; //1시방향
+    else if(DIRx<0 && DIRy==0) npcArray[idx]->DirLoc=2; //3시방향
+    else if(DIRx<0 && DIRy>0) npcArray[idx]->DirLoc=1; //5시방향
+    else if(DIRx==0 && DIRy>0) npcArray[idx]->DirLoc=0; //6시방향
+    else if(DIRx>0 && DIRy>0) npcArray[idx]->DirLoc=7; //7시방향
+    else if(DIRx>0 && DIRy==0) npcArray[idx]->DirLoc=6; //9시방향
+    else if(DIRx>0 && DIRy<0) npcArray[idx]->DirLoc=5; //11시방향
+    pthread_mutex_unlock(&npclock);
+
+    DaMaGe = npcArray[idx]->AP - chr->defense;
+    if(DaMaGe<0) DaMaGe=0;
+    HP = chr->hp_c - DaMaGe;
+    if(HP<0) HP=0;
+    
+    mesg[rLen] = PK_OBJ_UPDATE_ACT;
+    rLen+=1;
+    mesg[rLen] = T_NPC;
+    rLen+=1;
+    mesg[rLen] = 1;
+    rLen+=1;
+    mesg[rLen] = npcArray[idx]->div;
+    rLen+=1;
+    memcpy(&mesg[rLen], &npcArray[idx]->npc_id, 2);
+    rLen+=2;
+    mesg[rLen] = S_FIGHT;
+    rLen+=1;
+    mesg[rLen] = T_USER;
+    rLen+=1;
+    memcpy(&mesg[rLen], &chr->userNo, 2);
+    rLen+=2;
+    memcpy(&mesg[rLen], &HP, 2);
+    rLen+=2;
+    memcpy(&mesg[rLen], &nEnd, 2);
+    rLen+=2;
+    memcpy(&mesg[0], &rLen, 2);
+    map_usersend_All(chr->Ax, chr->Ay, mesg, rLen, NULL);
+
+    pthread_mutex_lock(&synclock);
+    if(HP==0) { //캐릭터 죽음
+        chr->userStat = S_DIE;
+        chr->hp_c = chr->hp_m/10;
+        pthread_mutex_unlock(&synclock);
+        pthread_mutex_lock(&npclock);
+
+        npcArray[idx]->status = S_STAND;
+        npcArray[idx]->targetChr = NULL;
+        npcArray[idx]->tgFlag = 0;
+
+        return;
+    }else chr->hp_c = HP; 
+    pthread_mutex_unlock(&synclock);
+    pthread_mutex_unlock(&npclock);
+    npcArray[idx]->tgFlag = 1;
 }
 
 extern type_npc * npc_ret_fight(unsigned short idx){

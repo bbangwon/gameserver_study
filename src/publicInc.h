@@ -96,3 +96,37 @@ extern pthread_mutex_t 		itemlock;
 #define AFRAME	900000/GAME_FRAME
 #define _ONE_SEC	GAME_FRAME
 #define _TWO_MIN	GAME_FRAME*120
+
+#define _MAP_IDX 0   //서버 자신의 인덱스
+
+#define _MAP_GWAY_0_X 250 //0번 이동 통로의 X좌표
+#define _MAP_GWAY_0_Y 5 //0번 이동 통로의 Y좌표
+#define _MAP_GWAY_0_TO_SVR 1 //0번 이동 통로로 이어지는 월드 서버 인덱스
+
+#define _MAP_GWAY_1_X 506 //1번 이동 통로의 X좌표
+#define _MAP_GWAY_1_Y 256 //1번 이동 통로의 Y좌표
+#define _MAP_GWAY_1_TO_SVR 2 //1번 이동 통로로 이어지는 월드 서버 인덱스
+
+#define _MAP_GWAY_2_X 0 //2번 이동 통로의 X좌표
+#define _MAP_GWAY_2_Y 0 //2번 이동 통로의 Y좌표
+#define _MAP_GWAY_2_TO_SVR 0 //2번 이동 통로로 이어지는 월드 서버 인덱스
+
+#define _MAP_GWAY_3_X 0 //3번 이동 통로의 X좌표
+#define _MAP_GWAY_3_Y 0 //3번 이동 통로의 Y좌표
+#define _MAP_GWAY_3_TO_SVR _MAP_IDX //3번 이동 통로로 이어지는 월드 서버 인덱스
+
+#define _MAP_GWAY_4_X 0 //4번 이동 통로의 X좌표
+#define _MAP_GWAY_4_Y 0 //4번 이동 통로의 Y좌표
+#define _MAP_GWAY_4_TO_SVR _MAP_IDX //4번 이동 통로로 이어지는 월드 서버 인덱스
+
+#define _MAP_GWAY_5_X 0 //5번 이동 통로의 X좌표
+#define _MAP_GWAY_5_Y 0 //5번 이동 통로의 Y좌표
+#define _MAP_GWAY_5_TO_SVR _MAP_IDX //5번 이동 통로로 이어지는 월드 서버 인덱스
+
+#define _MAP_GWAY_6_X 0 //6번 이동 통로의 X좌표
+#define _MAP_GWAY_6_Y 0 //6번 이동 통로의 Y좌표
+#define _MAP_GWAY_6_TO_SVR _MAP_IDX //6번 이동 통로로 이어지는 월드 서버 인덱스
+
+#define _MAP_GWAY_7_X 0 //7번 이동 통로의 X좌표 
+#define _MAP_GWAY_7_Y 0 //7번 이동 통로의 Y좌표
+#define _MAP_GWAY_7_TO_SVR _MAP_IDX //7번 이동 통로로 이어지는 월드 서버 인덱스

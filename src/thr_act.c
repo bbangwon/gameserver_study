@@ -379,5 +379,84 @@ extern int main_act(char *dat, short pLen, type_session *c, void *conn, int udps
             }else return 0;
             break;
     }
+}
 
+static void thr_party_request(type_session *c, unsigned short tgidx) {
+    type_session *tc;
+    unsigned short nEnd = PEND;
+    short pLen=2, lvpt;
+    char msg[128];
+
+    msg[pLen] = PK_PT_REQ;
+    pLen += 1;
+
+    if(c->level<4){ //레벨이 4보다 작으면 파티장을 못함
+        msg[pLen] = 1;
+        pLen += 1;
+        memcpy(&msg[pLen], &nEnd, 2);
+        pLen += 2;
+        memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+        map_pData_snd(c, msg, pLen);
+        return;
+    }
+
+    if(c->party.flag==1) {
+        if(c->party.cnt == 3 || c->party.ison1 != 2) { //파티원 초과 또는 파티장이 아님
+            msg[pLen] = 2; // 파티원 초과 또는 파티장이 아님
+            pLen += 1;
+            memcpy(&msg[pLen], &nEnd, 2);
+            pLen += 2;
+            memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+            map_pData_snd(c, msg, pLen);
+            return;
+        }
+    }
+
+    tc=map_ret_chr(c->Ax, c->Ay, tgidx); //거리 체크 기능
+    if(tc==NULL) {
+        msg[pLen] = 3; // 대상 유저가 존재하지 않음
+        pLen += 1;
+        memcpy(&msg[pLen], &nEnd, 2);
+        pLen += 2;
+        memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+        map_pData_snd(c, msg, pLen);
+        return;
+    }
+    if(tc->party.flag==1) { //이미 파티중
+        msg[pLen] = 4; // 대상 유저가 이미 파티 중임
+        pLen += 1;
+        memcpy(&msg[pLen], &nEnd, 2);
+        pLen += 2;
+        memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+        map_pData_snd(c, msg, pLen);
+        return;
+    }
+    if(tc->level>=c->level)
+        lvpt = tc->level-c->level;
+    else
+        lvpt = c->level-tc->level;
+    if(lvpt > 5) {
+        msg[pLen] = 5; // 레벨 차이가 너무 큼
+        pLen += 1;
+        memcpy(&msg[pLen], &nEnd, 2);
+        pLen += 2;
+        memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+        map_pData_snd(c, msg, pLen);
+        return;
+    }
+
+    msg[pLen] = RET_TRUE;
+    pLen += 1;
+    memcpy(&msg[pLen], &c->userNo, 2);
+    pLen += 2;
+    memcpy(&msg[pLen], &nEnd, 2);
+    pLen += 2;
+    memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+
+    pthread_mutex_lock(&synclock);
+    c->party.waitfor=tc;
+    tc->party.waitfor=c;
+    pthread_mutex_unlock(&synclock);
+
+    map_pData_snd(c, msg, pLen);
 }

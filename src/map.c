@@ -550,3 +550,7 @@ extern void * map_ret_Activ_tg(unsigned short npcx, unsigned short npcy,unsigned
 extern short map_ret_chrdist(unsigned short x, unsigned short y,unsigned short idx) {
     return 0;
 }
+
+extern type_session * map_ret_chr(unsigned short Ax,unsigned short Ay,unsigned short tidx){
+    return NULL;
+}

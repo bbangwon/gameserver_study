@@ -62,7 +62,8 @@ enum {
    PK_TRADE_CANCEL,
    PK_SKILL_GET,
    PK_SKILL_LVUP,
-   PK_SKILL_USE
+   PK_SKILL_USE,
+   PK_PT_REQ
 };
 
 /*obj type
@@ -75,6 +76,11 @@ enum {T_USER,	T_NPC,	T_ITEM};
 */
 enum {S_STAND,	S_MOVE,	S_FIGHT,	S_TRADE, S_DIE, S_RET, S_REGEN, S_REMOVE};
 
+
+/*return value settings*/
+typedef enum {
+	RET_TRUE, RET_FALSE, RET_REDUN, RET_NOID, RET_FULL, RET_NOTENO
+}type_tf;
 
 
 extern pthread_mutex_t 		synclock;

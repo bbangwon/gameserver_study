@@ -56,7 +56,10 @@ enum {
    PK_WARE_POS,
    PK_TRADE_REQ,
    PK_TRADE_REQ_OK,
-   PK_TRADE_LIST
+   PK_TRADE_LIST,
+   PK_TRADE_SUCC,
+   PK_TRADE_OK,
+   PK_TRADE_CANCEL
 };
 
 /*obj type

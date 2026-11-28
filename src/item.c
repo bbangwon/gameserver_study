@@ -912,3 +912,275 @@ extern short item_trade_list(void * chr, char * msg){
     if(res==0) map_pData_snd(c->trade.tg, data, dLen); //성공이면 타겟유저에게도 전송
     return 1;
 }
+
+extern short item_trade_ok(void * chr, char * msg){
+    type_session *c;
+    type_session *tc;
+    int res=0,i,j,chk=0,myCnt=0,tgCnt=0,myTcnt=0,tgTcnt=0;
+    short dLen=2;
+    char data[32];
+    unsigned short mytmp[2], tgtmp[2];
+    unsigned char mytmpcnt[2], tgtmpcnt[2], mychange[4], tgchange[4];
+    unsigned char cnt=0, tmp=0;
+    unsigned short nEnd=PEND;
+
+    c=(type_session *)chr;
+    tc=(type_session *)c->trade.tg;
+    if(c->trade.flag!=1) res=1;
+    else if(tc==NULL) res=2;
+    else if(tc->trade.flag!=1) res=3;
+    if(c->coin<c->trade.coin) res=4;
+    if(tc->coin<tc->trade.coin) res=5;
+
+    if(res==0) {
+        if(tc->trade.confirm==1) { //상대가 이미 확인했을 때 진행
+            pthread_mutex_lock(&synclock);
+            for(i=0;i<2;i++) {
+                if(c->trade.itemidx[i] != 0){
+                    tmp =c->trade.invidx[i];
+                    myTcnt+=1;
+                    if(tmp>4||c->inven_cnt[tmp]==0){
+                        chk=1;
+                        break;
+                    }
+                    if(c->inven[tmp]!=c->trade.itemidx[i]){
+                        chk=2;
+                        break;
+                    }
+                    if(c->inven_cnt[tmp]<c->trade.cnt[i]){
+                        chk=3;
+                        break;
+                    } else if(c->inven_cnt[tmp]==c->trade.cnt[i]){
+                        myCnt+=1;
+                    }
+                }
+            }
+            if(chk==0) {
+                for(i=0;i<4;i++) {
+                    mychange[i]=0;
+                    tgchange[i]=0;
+                    if(c->inven[tmp]==0) myCnt+=1;
+                }
+                for(i=0;i<2;i++) {
+                    if(tc->trade.itemidx[i] != 0){
+                        tmp=tc->trade.invidx[i];
+                        tgTcnt+=1;
+                        if(tmp>4||tc->inven_cnt[tmp]==0){
+                            chk=4;
+                            break;
+                        }
+                        if(tc->inven[tmp]!=tc->trade.itemidx[i]){
+                            chk=5;
+                            break;
+                        }
+                        if(tc->inven_cnt[tmp]<tc->trade.cnt[i]){
+                            chk=6;
+                            break;
+                        } else if(tc->inven_cnt[tmp]==tc->trade.cnt[i]){
+                            tgCnt+=1;
+                        }
+                    }
+                }
+                if(chk==0) {
+                    for(i=0;i<4;i++) {
+                        if(tc->inven[tmp]==0) tgCnt+=1;
+                    }
+                }
+            }
+            if(chk==0) {
+                if(myTcnt>tgCnt) chk=7;
+                else if(tgTcnt>myCnt) chk=8;
+                else {
+                    c->coin += tc->trade.coin;
+                    tc->coin -= tc->trade.coin;
+                    tc->coin += c->trade.coin;
+                    c->coin -= c->trade.coin;
+
+                    for(i=0;i<2;i++) {
+                        mytmp[i]=0;
+                        if(c->trade.itemidx[i] != 0){
+                            tmp =  c->trade.invidx[i];
+                            mytmp[i] = c->inven[tmp];
+                            mytmpcnt[i] = c->trade.cnt[i];
+
+                            if(c->inven_cnt[tmp] == c->trade.cnt[i]){
+                                c->inven[tmp] = 0;
+                                c->inven_cnt[tmp] = 0;
+                            } else c->inven_cnt[tmp] -= c->trade.cnt[i];
+                            mychange[tmp]=1;
+                        }
+                    }
+                    for(i=0;i<2;i++) {
+                        tgtmp[i]=0;
+                        if(tc->trade.itemidx[i] != 0){
+                            tmp = tc->trade.invidx[i];
+                            tgtmp[i] = tc->inven[tmp];
+                            tgtmpcnt[i] = tc->trade.cnt[i];
+
+                            if(tc->inven_cnt[tmp] == tc->trade.cnt[i]){
+                                tc->inven[tmp] = 0;
+                                tc->inven_cnt[tmp] = 0;
+                            } else tc->inven_cnt[tmp] -= tc->trade.cnt[i];
+                            tgchange[tmp]=1;
+                        }
+                    }
+                    for(i=0;i<4;i++) {
+                        if(cnt<tgTcnt && c->inven[i] == 0) {
+                            mychange[i] = 1;
+                            for(j=0;j<2;j++) {
+                                if(tgtmp[j] != 0) break;
+                            }
+                            c->inven[i]=tgtmp[j];
+                            c->inven_cnt[i]=tgtmpcnt[j];
+                            tgtmp[j] = 0;
+                            tgtmpcnt[j] = 0;
+                            cnt+=1;
+                        }
+                    }
+                    cnt = 0;
+                    for(i=0;i<4;i++) {
+                        if(cnt<myTcnt && tc->inven[i] == 0) {
+                            tgchange[i] = 1;
+                            for(j=0;j<2;j++) {
+                                if(mytmp[j] != 0) break;
+                            }
+                            tc->inven[i]=mytmp[j];
+                            tc->inven_cnt[i]=mytmpcnt[j];
+                            mytmp[j] = 0;
+                            mytmpcnt[j] = 0;
+                            cnt+=1;
+                        }
+                    }
+                }
+            }
+            c->trade.flag = 0;
+            tc->trade.flag = 0;
+
+            pthread_mutex_unlock(&synclock);
+
+            dLen=2;
+            data[dLen]=PK_TRADE_SUCC;
+            dLen+=1;
+            memcpy(&data[dLen], &c->coin, 4);
+            dLen+=4;
+            dLen+=1;
+            cnt=0;
+            for(i=0;i<4;i++) {
+                if(mychange[i]==1) {
+                    cnt+=1;
+                    data[dLen]=i;
+                    dLen+=1;
+                    memcpy(&data[dLen], &c->inven[i], 2);
+                    dLen+=2;
+                    data[dLen]=c->inven_cnt[i];
+                    dLen+=1;
+                }
+            }
+            data[7]=cnt;
+            memcpy(&data[dLen], &nEnd,2);
+            dLen+=2;
+            memcpy(&data[0], &dLen, 2);
+            map_pData_snd(c, data, dLen);
+
+            dLen=2;
+            data[dLen]=PK_TRADE_SUCC;
+            dLen+=1;
+            memcpy(&data[dLen], &tc->coin, 4);
+            dLen+=4;
+            dLen+=1;
+            cnt=0;
+            for(i=0;i<4;i++) {
+                if(tgchange[i]==1) {
+                    cnt+=1;
+                    data[dLen]=i;
+                    dLen+=1;
+                    memcpy(&data[dLen], &tc->inven[i], 2);
+                    dLen+=2;
+                    data[dLen]=tc->inven_cnt[i];
+                    dLen+=1;
+                }
+            }
+            data[7]=cnt;
+            memcpy(&data[dLen], &nEnd,2);
+            dLen+=2;
+            memcpy(&data[0], &dLen, 2);
+            map_pData_snd(tc, data, dLen);
+        } else {
+            pthread_mutex_lock(&synclock);
+            c->trade.confirm=1;
+            pthread_mutex_unlock(&synclock);
+            dLen=2;
+            data[dLen]=PK_TRADE_OK;
+            dLen+=1;
+            data[dLen]=res;
+            dLen+=1;
+            memcpy(&data[dLen], &c->userNo, 2);
+            dLen+=2;
+            memcpy(&data[dLen], &nEnd, 2);
+            dLen+=2;
+            memcpy(&data[0], &dLen, 2);
+            map_pData_snd(c, data, dLen);
+            map_pData_snd(tc, data, dLen);
+        }
+    }
+    if(res>0) {
+        dLen=2;
+        data[dLen]=PK_TRADE_OK;
+        dLen+=1;
+        data[dLen]=res;
+        dLen+=1;
+        memcpy(&data[dLen], &c->userNo, 2);
+        dLen+=2;
+        memcpy(&data[dLen], &nEnd, 2);
+        dLen+=2;
+        memcpy(&data[0], &dLen, 2);
+        map_pData_snd(c, data, dLen);        
+    }
+    return 1;
+}
+
+extern short item_trade_cancel(void * chr, char * msg){
+    type_session *c;
+    type_session *tc;
+    int res=0;
+    short dLen=2;
+    char data[32];
+    unsigned short nEnd=PEND;
+
+    c=(type_session *)chr;
+    tc=(type_session *)c->trade.tg;
+    if(tc==NULL) res=1;
+    else if(tc->trade.tg!=c)res=1;
+
+    if(res==0){
+        pthread_mutex_lock(&synclock);
+        c->trade.flag=0;
+        tc->trade.flag=0;
+        pthread_mutex_unlock(&synclock);
+        data[dLen]=PK_TRADE_CANCEL;
+        dLen+=1;
+        data[dLen]=0;
+        dLen+=1;
+        memcpy(&data[dLen], &c->userNo, 2);
+        dLen+=2;
+        memcpy(&data[dLen], &nEnd, 2);
+        dLen+=2;
+        memcpy(&data[0], &dLen, 2);
+        map_pData_snd(c, data, dLen);
+        map_pData_snd(tc, data, dLen);
+        return 1;
+    }
+
+    data[dLen]=PK_TRADE_CANCEL;
+    dLen+=1;
+    data[dLen]=res;
+    dLen+=1;
+    memcpy(&data[dLen], &c->userNo, 2);
+    dLen+=2;
+    memcpy(&data[dLen], &nEnd, 2);
+    dLen+=2;
+    memcpy(&data[0], &dLen, 2);
+    map_pData_snd(c, data, dLen);
+    return 1;
+}
+

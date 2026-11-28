@@ -63,7 +63,9 @@ enum {
    PK_SKILL_GET,
    PK_SKILL_LVUP,
    PK_SKILL_USE,
-   PK_PT_REQ
+   PK_PT_REQ,
+   PK_PT_PERMIT,
+   PK_PT_INFO
 };
 
 /*obj type

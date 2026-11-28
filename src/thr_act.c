@@ -460,3 +460,221 @@ static void thr_party_request(type_session *c, unsigned short tgidx) {
 
     map_pData_snd(c, msg, pLen);
 }
+
+static void thr_party_permit(type_session *c, unsigned short ptMain, short flag) {
+    // ptMain: 파티장, flag 0:허락, 1: 거절 2: 다른 작업중
+    type_session *tc = NULL;    //파티 요청자
+    type_session *cc = NULL; //파티장이 가지고 있는 대상자
+    type_session *mc = NULL; //파티원
+    unsigned short nEnd = PEND;
+    short pLen = 2, tNo=0, Len;
+    int newFlag=0;
+    char msg[512], msg2[512];
+    
+    msg[pLen] = PK_PT_PERMIT;
+    pLen += 1;
+
+    if(c->party.flag == 1) { //이 패킷은 파티 대상자가 보낸 것이다. 이미 파티 중임
+        msg[pLen] = 3;
+        pLen += 1;
+        memcpy(&msg[pLen], &c->userNo, 2);
+        pLen += 2;
+        memcpy(&msg[pLen], &nEnd, 2);
+        pLen += 2;
+        memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+        map_pData_snd(c, msg, pLen);
+        return;
+    }
+
+    tc=(type_session *)c->party.waitfor; //파티장
+    if(tc!=NULL) {
+        cc=(type_session *)tc->party.waitfor; //파티장이 가지고 있는 대상자
+        if(cc==NULL) {
+            msg[pLen] = 4; // 파티장이 이미 다른 작업 중임
+            pLen += 1;
+            memcpy(&msg[pLen], &c->userNo, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &nEnd, 2);
+            pLen += 2;
+            memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+            map_pData_snd(c, msg, pLen);
+            return;
+        }
+
+        if(flag!=0) {
+            msg[pLen] = 1; // 거절
+            pLen += 1;
+            memcpy(&msg[pLen], &c->userNo, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &nEnd, 2);
+            pLen += 2;
+            memcpy(&msg[0], &pLen, 2); 
+            map_pData_snd(tc, msg, pLen); //파티장에게만 전송
+            return;
+        }
+
+        if(tc->userNo==ptMain&&cc->userNo==c->userNo) { //파티장 찾음
+            if(tc->party.flag == 1) { //이미 파티 중일 경우
+                if(tc->party.ison1!=2) {
+                    msg[pLen] = 5; // 이미 파티 중임
+                    pLen += 1;
+                    memcpy(&msg[pLen], &c->userNo, 2);
+                    pLen += 2;
+                    memcpy(&msg[pLen], &nEnd, 2);
+                    pLen += 2;
+                    memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+                    map_pData_snd(c, msg, pLen);
+                    return;
+                }
+            }
+
+            pthread_mutex_lock(&synclock);
+            if(tc->party.flag == 0) { //첫 파티 결성
+                newFlag = 1;
+                tc->party.flag = 1;
+                tc->party.cnt = 2;
+
+                tc->party.memidx=1; //ptmain
+                tc->party.master=NULL;
+                tc->party.ison1 = 2; // 파티장 상태 설정
+                tc->party.mem2 = c;
+                tc->party.ison2 = 1;
+
+                c->party.flag = 1;
+                c->party.master = tc;
+                c->party.ison1 = 1; 
+                c->party.ison2 = 2;
+
+                tNo=2;
+            } else {
+                if(tc->party.cnt == 3) {
+                    pthread_mutex_unlock(&synclock);
+                    msg[pLen] = 6; // 파티가 가득 찼음
+                    pLen += 1;
+                    memcpy(&msg[pLen], &c->userNo, 2);
+                    pLen += 2;
+                    memcpy(&msg[pLen], &nEnd, 2);
+                    pLen += 2;
+                    memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+                    map_pData_snd(c, msg, pLen);                    
+                    map_pData_snd(tc, msg, pLen);                    
+                    return;
+                }
+
+                newFlag=0;
+                tc->party.cnt = 3;
+                c->party.flag = 1;
+                c->party.master = tc;
+                c->party.ison1 = 1;
+
+                if(tc->party.ison2 == 0) {
+                    tNo=2;
+                    mc=(type_session*)tc->party.mem3;
+                    if(mc==NULL) tNo=0;
+                    else {
+                        tc->party.mem2 = c;
+                        tc->party.ison2 = 1;
+                        c->party.mem2 = c;
+                        c->party.ison2 = 2;
+                        c->party.memidx = 2;
+                        mc->party.mem3 = c;
+                        mc->party.ison3 = 1;
+                    }
+                } else if(tc->party.ison3 == 0) {
+                    tNo=3;
+                    mc=(type_session*)tc->party.mem2;
+                    if(mc==NULL) tNo=0;
+                    else {
+                        tc->party.mem3 = c;
+                        tc->party.ison3 = 1;
+                        c->party.mem3 = c;
+                        c->party.ison3 = 2;
+                        c->party.memidx = 3;
+                        mc->party.mem2 = c;
+                        mc->party.ison2 = 1;
+                    }
+                }
+                if(tNo == 0) {
+                    pthread_mutex_unlock(&synclock);
+                    msg[pLen] = 7;
+                    pLen += 1;
+                    memcpy(&msg[pLen], &c->userNo, 2);
+                    pLen += 2;
+                    memcpy(&msg[pLen], &nEnd, 2);
+                    pLen += 2;
+                    memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+                    map_pData_snd(c, msg, pLen);                    
+                    map_pData_snd(tc, msg, pLen);                    
+                    return;
+                }
+            }
+            pthread_mutex_unlock(&synclock);
+
+            msg[pLen] = RET_TRUE;
+            pLen += 1;
+            msg[pLen] = 2;
+            pLen += 1;
+            memcpy(&msg[pLen], &c->userNo, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &nEnd, 2);
+            pLen += 2;
+            memcpy(&msg[0], &pLen, 2); 
+
+            Len=2;
+            msg2[Len] = PK_PT_INFO;
+            Len += 1;
+            msg2[Len] = 2;
+            Len += 1;
+            memcpy(&msg2[Len], &c->userNo, 2);
+            Len += 2;
+            memcpy(&msg2[Len], &c->hp_c, 2);
+            Len += 2;
+            memcpy(&msg2[Len], &c->Cx, 2);
+            Len += 2;
+            memcpy(&msg2[Len], &c->Cy, 2);
+            Len += 2;
+            memcpy(&msg2[Len], &tc->userNo, 2);
+            Len += 2;
+            memcpy(&msg2[Len], &tc->hp_m, 2);
+            Len += 2;
+            memcpy(&msg2[Len], &tc->hp_c, 2);
+            Len += 2;
+            memcpy(&msg2[Len], &tc->Cx, 2);
+            Len += 2;
+            memcpy(&msg2[Len], &tc->Cy, 2);
+            Len += 2;
+            memcpy(&msg2[Len], &nEnd, 2);
+            Len += 2;
+            memcpy(&msg2[0], &Len, 2);
+
+            if(newFlag==1){
+                map_pData_snd(tc, msg, pLen); //파티장에게 전송
+                map_pData_snd(c, msg2, Len); //새 파티원에게 전송
+            } else {
+                map_pData_snd(tc, msg, pLen); //파티장에게 전송
+                map_pData_snd(mc, msg, pLen); //기존 파티원에게 전송
+                map_pData_snd(c, msg2, Len); //새 파티원에게 전송
+            }
+            return;
+        } else {
+            msg[pLen] = 7;
+            pLen += 1;
+            memcpy(&msg[pLen], &c->userNo, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &nEnd, 2);
+            pLen += 2;
+            memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+            map_pData_snd(c, msg, pLen);
+            return;
+        }        
+    } else {
+        msg[pLen] = 8;
+        pLen += 1;
+        memcpy(&msg[pLen], &c->userNo, 2);
+        pLen += 2;
+        memcpy(&msg[pLen], &nEnd, 2);
+        pLen += 2;
+        memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+        map_pData_snd(c, msg, pLen);        
+    }
+}

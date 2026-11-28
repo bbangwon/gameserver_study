@@ -4,6 +4,7 @@
 #include "session.h"
 #include "map.h"
 #include "skill.h"
+#include "npc.h"
 #include "publicInc.h"
 
 struct skills{
@@ -116,4 +117,85 @@ extern void skill_lvup(void *chr, char *dat){
     Len+=2;
     memcpy(&msg[0], &Len, 2);
     map_pData_snd(c, msg, Len);
+}
+
+//스킬 사용
+extern void skill_use(void *chr, char *dat, void *conn){
+    unsigned short x,y,Len=2;
+    unsigned char invidx, res=0;
+    type_session *c;
+    char NPCDat[512], USRDat[512], msg[1024];
+    unsigned char NPCcnt=0, USRcnt=0, tot=0;
+    short lv;
+    unsigned short nEnd = PEND;
+
+    c=(type_session *)chr;
+
+    invidx = dat[3];
+    if(invidx>3) return;
+    if(c->mana_c<0) return;
+    else {
+        pthread_mutex_lock(&synclock);
+        c->mana_c-=10;
+        pthread_mutex_unlock(&synclock);
+    }
+    memcpy(&x, &dat[4], 2);
+    memcpy(&y, &dat[6], 2);
+
+    msg[Len] = PK_SKILL_USE;
+    Len+=1;
+    msg[Len] = res;
+    Len+=1;
+    msg[Len] = T_NPC;
+    Len+=1;
+    memcpy(&msg[Len],&c->userNo,2);
+    Len+=2;
+
+    switch(c->skill[invidx]) {
+        case 1: //1번 스킬
+            msg[Len]=1;
+            Len+=1;
+            memcpy(&msg[Len], &x, 2);
+            Len+=2;
+            memcpy(&msg[Len], &y, 2);
+            Len+=2;
+            Len+=1; // 객체 수
+            if(c->pkmode==1){
+
+            }else{
+                lv=c->skill_lv[invidx];
+                npc_skill_1(c, skill_def[1].lvpwr[lv], x, y, NPCDat, conn);
+                NPCcnt=NPCDat[0];
+            }
+            if(NPCcnt>0){
+                tot+=NPCcnt;
+                memcpy(&msg[Len], &NPCDat[1], NPCcnt*5);
+                Len += NPCcnt*5;
+            }
+            if(USRcnt>0){
+                tot+=USRcnt;
+                memcpy(&msg[Len], &USRDat[1], USRcnt*5);
+                Len += USRcnt*5;
+            }
+            break;
+        case 2:
+            if(c->pkmode == 1){
+
+            }else {
+
+            }
+            break;
+        case 3:
+            if(c->pkmode == 1){
+
+            }else {
+
+            }
+            break;
+    }
+    msg[12]=tot;
+    memcpy(&msg[Len], &nEnd, 2);
+    Len+=2;
+    memcpy(&msg[0], &Len, 2);
+    map_usersend_All(c->Ax, c->Ay, msg, Len, NULL);
 }

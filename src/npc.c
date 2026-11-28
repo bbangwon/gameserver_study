@@ -751,3 +751,8 @@ extern type_npc * npc_ret_fight(unsigned short idx){
 extern int npc_dist_chk(type_session *c){
     return 0;
 }
+
+extern void npc_skill_1(void * chr,unsigned short pwr, unsigned short xx, unsigned short yy,char * gDat,void * conn)
+{
+    
+}

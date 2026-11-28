@@ -86,4 +86,6 @@ short npc_drop_item(type_npc * npc, unsigned short userNo);
 
 int npc_dist_chk(type_session *c);
 
+void npc_skill_1(void * chr,unsigned short pwr, unsigned short xx, unsigned short yy,char * gDat,void * conn);
+
 

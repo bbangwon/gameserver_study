@@ -65,7 +65,8 @@ enum {
    PK_SKILL_USE,
    PK_PT_REQ,
    PK_PT_PERMIT,
-   PK_PT_INFO
+   PK_PT_INFO,
+   PK_PT_BAN
 };
 
 /*obj type

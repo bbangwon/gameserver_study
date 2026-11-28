@@ -678,3 +678,113 @@ static void thr_party_permit(type_session *c, unsigned short ptMain, short flag)
         map_pData_snd(c, msg, pLen);        
     }
 }
+
+static void thr_party_set(type_session *c){
+
+}
+
+//파티원 추방
+static void thr_part_bann(type_session *c, char *dat) {
+    type_session *mc1 = NULL;
+    type_session *mc2 = NULL;
+
+    unsigned short nEnd = PEND;
+    short pLen = 2;
+    unsigned short idx;
+    char msg[128];
+
+    if(c==NULL) return;
+    if(c->party.flag == 0||c->party.ison1!= 2) return;
+    memcpy(&idx, &dat[3], 2);
+
+    if(c->party.cnt == 2) {
+        if(c->party.ison2 == 1) mc1=(type_session *)c->party.mem2;
+        if(mc1!=NULL) {
+            pthread_mutex_lock(&synclock);
+            thr_party_set(mc1);
+            thr_party_set(c);
+            pthread_mutex_unlock(&synclock);
+            msg[pLen] = PK_PT_BAN;
+            pLen+=1;
+            msg[pLen]=1;
+            pLen += 1;
+            memcpy(&msg[pLen], &idx, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &nEnd, 2);
+            pLen += 2;
+            memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+            map_pData_snd(mc1, msg, pLen); // 추방된 파티원에게 전송
+            map_pData_snd(c, msg, pLen); // 파티장에게 전송
+            return;
+        }
+    } else {
+        if(c->party.ison2 == 1) mc1=(type_session *)c->party.mem2;
+        if(mc1!=NULL) {
+            if(mc1->userNo == idx) {
+                pthread_mutex_lock(&synclock);
+                thr_party_set(mc1);
+                c->party.cnt = 2;
+                c->party.ison2 = 0;
+                c->party.mem2 = NULL;
+                if(c->party.ison3 == 1) mc2=(type_session *)c->party.mem3;
+                if(mc2!=NULL) {
+                    mc2->party.ison2 = 0;
+                    mc2->party.mem2 = NULL;
+                }
+                pthread_mutex_unlock(&synclock);
+                msg[pLen] = PK_PT_BAN;
+                pLen+=1;
+                msg[pLen]=1;
+                pLen += 1;
+                memcpy(&msg[pLen], &idx, 2);
+                pLen += 2;
+                memcpy(&msg[pLen], &nEnd, 2);
+                pLen += 2;
+                memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+                map_pData_snd(mc1, msg, pLen); // 추방된 파티원에게 전송
+                map_pData_snd(mc2, msg, pLen); // 남은 파티원에게 전송
+                map_pData_snd(c, msg, pLen); // 파티장에게 전송
+                return;
+            }
+        }
+        if(c->party.ison3 == 1) mc1=(type_session *)c->party.mem3;
+        if(mc1!=NULL) {
+            if(mc1->userNo == idx) {
+                pthread_mutex_lock(&synclock);
+                thr_party_set(mc1);
+                c->party.cnt = 2;
+                c->party.ison3 = 0;
+                c->party.mem3 = NULL;
+                if(c->party.ison2 == 1) mc2=(type_session *)c->party.mem2;
+                if(mc2!=NULL) {
+                    mc2->party.ison3 = 0;
+                    mc2->party.mem3 = NULL;
+                }
+                pthread_mutex_unlock(&synclock);
+                msg[pLen] = PK_PT_BAN;
+                pLen+=1;
+                msg[pLen]=1;
+                pLen += 1;
+                memcpy(&msg[pLen], &idx, 2);
+                pLen += 2;
+                memcpy(&msg[pLen], &nEnd, 2);
+                pLen += 2;
+                memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+                map_pData_snd(mc1, msg, pLen); // 추방된 파티원에게 전송
+                map_pData_snd(mc2, msg, pLen); // 남은 파티원에게 전송
+                map_pData_snd(c, msg, pLen); // 파티장에게 전송
+                return;
+            }
+        }           
+    }
+    msg[pLen] = PK_PT_BAN;
+    pLen+=1;
+    msg[pLen]=1;
+    pLen += 1;
+    memcpy(&msg[pLen], &idx, 2);
+    pLen += 2;
+    memcpy(&msg[pLen], &nEnd, 2);
+    pLen += 2;
+    memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+    map_pData_snd(c, msg, pLen); // 파티장에게 전송
+}

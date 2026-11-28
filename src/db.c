@@ -395,3 +395,10 @@ extern int db_chk_lvup(void * cc,void * con)
     }else return 0;
 
 }
+
+extern type_sockadr * db_ret_udpsock(int idx){
+    return NULL;
+}
+extern int db_ret_udpLen(int idx){
+    return 0;
+}

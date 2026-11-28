@@ -1,6 +1,10 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <netinet/tcp.h>
+
 #include "session.h"
 #include "db.h"
 #include "map.h"
@@ -9,6 +13,8 @@
 #include "item.h"
 #include "svr.h"
 #include "publicInc.h"
+
+
 
 static short mvAction_set(type_session *c, short Dx, short Dy, short dirL){
     if(!c) return 0;
@@ -1064,5 +1070,124 @@ extern void thr_party_discon(type_session *c,char flag){
 
             }
         }
+    }
+}
+
+static void thr_map_move_req(type_session *c, char *dat, int udpsock){
+    unsigned char gidx=0, res=0;
+    int dist=0, udlen=0;
+    unsigned int sKey=0, svrIdx;
+    type_sockadr *udsock;
+    short Len=2;
+    char msg[64];
+    unsigned short nEnd=PEND;
+
+    gidx=dat[3];
+
+    if(gidx>7||gidx==_MAP_IDX) res = 1;
+    else {
+        switch(gidx) {
+            case 0:
+                dist=map_ret_dist(c->Cx, c->Cy, _MAP_GWAY_0_X, _MAP_GWAY_0_Y);
+                if(dist>10) res = 2;
+                else {
+                    svrIdx = _MAP_GWAY_0_TO_SVR;
+                    udsock=db_ret_udpsock(_MAP_GWAY_0_TO_SVR);
+                    udlen=db_ret_udpLen(_MAP_GWAY_0_TO_SVR);
+                }
+                break;
+            case 1:
+                dist=map_ret_dist(c->Cx, c->Cy, _MAP_GWAY_1_X, _MAP_GWAY_1_Y);
+                if(dist>10) res = 2;
+                else {
+                    svrIdx = _MAP_GWAY_1_TO_SVR;
+                    udsock=db_ret_udpsock(_MAP_GWAY_1_TO_SVR);
+                    udlen=db_ret_udpLen(_MAP_GWAY_1_TO_SVR);
+                }
+                break;
+            case 2:
+                dist=map_ret_dist(c->Cx, c->Cy, _MAP_GWAY_2_X, _MAP_GWAY_2_Y);
+                if(dist>10) res = 2;
+                else {
+                    svrIdx = _MAP_GWAY_2_TO_SVR;
+                    udsock=db_ret_udpsock(_MAP_GWAY_2_TO_SVR);
+                    udlen=db_ret_udpLen(_MAP_GWAY_2_TO_SVR);
+                }
+                break;
+            case 3:
+                dist=map_ret_dist(c->Cx, c->Cy, _MAP_GWAY_3_X, _MAP_GWAY_3_Y);
+                if(dist>10) res = 2;
+                else {
+                    svrIdx = _MAP_GWAY_3_TO_SVR;
+                    udsock=db_ret_udpsock(_MAP_GWAY_3_TO_SVR);
+                    udlen=db_ret_udpLen(_MAP_GWAY_3_TO_SVR);
+                }
+                break;
+            case 4:
+                dist=map_ret_dist(c->Cx, c->Cy, _MAP_GWAY_4_X, _MAP_GWAY_4_Y);
+                if(dist>10) res = 2;
+                else {
+                    svrIdx = _MAP_GWAY_4_TO_SVR;
+                    udsock=db_ret_udpsock(_MAP_GWAY_4_TO_SVR);
+                    udlen=db_ret_udpLen(_MAP_GWAY_4_TO_SVR);
+                }
+                break;
+            case 5:
+                dist=map_ret_dist(c->Cx, c->Cy, _MAP_GWAY_5_X, _MAP_GWAY_5_Y);
+                if(dist>10) res = 2;
+                else {
+                    svrIdx = _MAP_GWAY_5_TO_SVR;
+                    udsock=db_ret_udpsock(_MAP_GWAY_5_TO_SVR);
+                    udlen=db_ret_udpLen(_MAP_GWAY_5_TO_SVR);
+                }
+                break;
+            case 6:
+                dist=map_ret_dist(c->Cx, c->Cy, _MAP_GWAY_6_X, _MAP_GWAY_6_Y);
+                if(dist>10) res = 2;
+                else {
+                    svrIdx = _MAP_GWAY_6_TO_SVR;
+                    udsock=db_ret_udpsock(_MAP_GWAY_6_TO_SVR);
+                    udlen=db_ret_udpLen(_MAP_GWAY_6_TO_SVR);
+                }
+                break;
+            case 7:
+                dist=map_ret_dist(c->Cx, c->Cy, _MAP_GWAY_7_X, _MAP_GWAY_7_Y);
+                if(dist>10) res = 2;
+                else {
+                    svrIdx = _MAP_GWAY_7_TO_SVR;
+                    udsock=db_ret_udpsock(_MAP_GWAY_7_TO_SVR);
+                    udlen=db_ret_udpLen(_MAP_GWAY_7_TO_SVR);
+                }
+                break;
+        }
+    }
+
+    if(res==0) {
+        sKey = ((unsigned int)rand())^((unsigned int)time(NULL));
+        msg[Len]=PKU_MAP_KEY;
+        Len+=1;
+        msg[Len]=_MAP_IDX;
+        Len+=1;
+        memcpy(&msg[Len], &c->userNo,2);
+        Len+=2;
+        memcpy(&msg[Len], &sKey,4);
+        Len+=4;
+        msg[Len]=c->uLen;
+        Len+=1;
+        memcpy(&msg[Len], &c->userid[0], c->uLen);
+        Len+=c->uLen;
+        memcpy(&msg[Len], &nEnd, 2);
+        Len+=2;
+        memcpy(&msg[0], &Len, 2);
+        sendto(udpsock, msg, Len, 0, (SA*)udsock, udlen);
+    } else {
+        msg[Len]=PK_MAP_MOVE_REQ;
+        Len+=1;
+        msg[Len]=res;
+        Len+=1;
+        memcpy(&msg[Len], &nEnd, 2);
+        Len+=2;
+        memcpy(&msg[0], &Len, 2);
+        map_pData_snd(c, msg, Len);
     }
 }

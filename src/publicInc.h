@@ -68,7 +68,11 @@ enum {
    PK_PT_INFO,
    PK_PT_BAN,
    PK_PT_BREAK,
-   PK_PT_LEAVE
+   PK_PT_LEAVE,
+
+   PK_MAP_MOVE_REQ,
+
+   PKU_MAP_KEY
 };
 
 /*obj type
@@ -130,3 +134,5 @@ extern pthread_mutex_t 		itemlock;
 #define _MAP_GWAY_7_X 0 //7번 이동 통로의 X좌표 
 #define _MAP_GWAY_7_Y 0 //7번 이동 통로의 Y좌표
 #define _MAP_GWAY_7_TO_SVR _MAP_IDX //7번 이동 통로로 이어지는 월드 서버 인덱스
+
+#define	SA	struct sockaddr

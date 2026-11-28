@@ -788,3 +788,191 @@ static void thr_part_bann(type_session *c, char *dat) {
     memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
     map_pData_snd(c, msg, pLen); // 파티장에게 전송
 }
+
+// 파티원 탈퇴
+extern void thr_party_discon(type_session *c,char flag){
+    type_session *tc=NULL;
+    type_session *mc1=NULL;
+    type_session *mc2=NULL;
+
+    unsigned short nEnd=PEND;
+    short pLen=2;
+    char msg[128];
+
+    if(c==NULL) return;
+    if(c->party.flag == 0) return;
+
+    if(c->party.ison1 == 2) { //파티장일 경우 파티 해제
+        msg[pLen] = PK_PT_BREAK;
+        pLen += 1;
+        memcpy(&msg[pLen], &c->userNo, 2);
+        pLen += 2;
+        memcpy(&msg[pLen], &nEnd, 2);
+        pLen += 2;
+        memcpy(&msg[0], &pLen, 2); // 패킷 길이 정보 업데이트
+
+        if(flag==0){ //탈퇴
+            pthread_mutex_lock(&synclock);
+            if(c->party.ison2 == 1) {
+                mc1 = (type_session *)c->party.mem2;
+                if(mc1 != NULL) {
+                    thr_party_set(mc1);
+                }
+            }
+            if(c->party.ison3 == 1) {
+                mc2 = (type_session *)c->party.mem3;
+                if(mc2 != NULL) {
+                    thr_party_set(mc2);
+                }
+            }
+            thr_party_set(c);
+            pthread_mutex_unlock(&synclock);
+
+            map_pData_snd(c, msg, pLen);
+        } else {
+            if(c->party.ison2 == 1) {
+                mc1 = (type_session *)c->party.mem2;
+                if(mc1 != NULL) {
+                    thr_party_set(mc1);
+                }
+            }
+            if(c->party.ison3 == 1) {
+                mc2 = (type_session *)c->party.mem3;
+                if(mc2 != NULL) {
+                    thr_party_set(mc2);
+                }
+            }            
+        }
+        if(mc1) map_pData_snd(mc1, msg, pLen); //파티 깨짐을 알림
+        if(mc2) map_pData_snd(mc2, msg, pLen);
+
+    } else {
+        tc=(type_session *)c->party.master;
+        if(tc != NULL) {
+            if(tc->party.cnt == 2) { //파티 해체
+                msg[pLen] = PK_PT_BREAK;
+                pLen += 1;
+                memcpy(&msg[pLen], &c->userNo, 2);
+                pLen += 2;
+                memcpy(&msg[pLen], &nEnd, 2);
+                pLen += 2;
+                memcpy(&msg[0], &pLen, 2); 
+
+                if(flag == 0) {
+                    pthread_mutex_lock(&synclock);
+                    if(tc->party.ison2 == 1) {
+                        mc1 = (type_session *)tc->party.mem2;
+                        if(mc1 != NULL) {
+                            thr_party_set(mc1);
+                        }
+                    }
+                    if(tc->party.ison3 == 1) {
+                        mc2 = (type_session *)tc->party.mem3;
+                        if(mc2 != NULL) {
+                            thr_party_set(mc2);
+                        }
+                    }
+                    thr_party_set(tc);
+                    pthread_mutex_unlock(&synclock);                    
+                } else {
+                    if(tc->party.ison2 == 1) {
+                        mc1 = (type_session *)tc->party.mem2;
+                        if(mc1 != NULL) {
+                            thr_party_set(mc1);
+                        }
+                    }
+                    if(tc->party.ison3 == 1) {
+                        mc2 = (type_session *)tc->party.mem3;
+                        if(mc2 != NULL) {
+                            thr_party_set(mc2);
+                        }
+                    }
+                    thr_party_set(tc);
+                }
+                map_pData_snd(tc, msg, pLen); 
+                if(mc1) map_pData_snd(mc1, msg, pLen); 
+                if(mc2) map_pData_snd(mc2, msg, pLen);
+            } else {
+                msg[pLen] = PK_PT_LEAVE;
+                pLen += 1;
+                msg[pLen] = 0;
+                pLen += 1;
+                memcpy(&msg[pLen], &c->userNo, 2);
+                pLen += 2;
+                memcpy(&msg[pLen], &nEnd, 2);
+                pLen += 2;
+                memcpy(&msg[0], &pLen, 2); 
+
+                tc=(type_session *)c->party.master;
+                if(tc==NULL) return;
+
+                if(flag==0) {
+                    pthread_mutex_lock(&synclock);
+                    if(tc->party.ison2 == 1) {
+                        mc1 = (type_session *)tc->party.mem2;
+                        if(mc1 == c) {
+                            thr_party_set(mc1);
+                            tc->party.ison1 = 0;
+                            tc->party.cnt=2;
+                            tc->party.mem2 = NULL;
+                            tc->party.ison2 = 0;
+                        }else {
+                            thr_party_set(c);
+                            pthread_mutex_unlock(&synclock);
+                            return;                          
+                        }                        
+                    } else {
+                        mc2 = (type_session *)tc->party.mem3;
+                        if(mc2 == c) {
+                            thr_party_set(mc2);
+                            tc->party.ison1 = 0;
+                            tc->party.cnt=2;
+                            tc->party.mem2 = NULL;
+                            tc->party.ison2 = 0;
+                        } else {
+                            thr_party_set(c);
+                            pthread_mutex_unlock(&synclock);
+                            return;
+                        }
+                    }
+                    pthread_mutex_unlock(&synclock);
+                    if(mc1) map_pData_snd(mc1, msg, pLen); 
+                    if(mc2) map_pData_snd(mc2, msg, pLen); 
+                    map_pData_snd(tc, msg, pLen); 
+                } else {
+                    if(tc->party.ison2 == 1) {
+                        mc1 = (type_session *)tc->party.mem2;
+                        if(mc1 == c) {
+                            thr_party_set(mc1);
+                            tc->party.ison1 = 0;
+                            tc->party.cnt=2;
+                            tc->party.mem2 = NULL;
+                            tc->party.ison2 = 0;
+                        } else {
+                            thr_party_set(c);
+                            pthread_mutex_unlock(&synclock);
+                            return;
+                        }
+                    } else {
+                        mc2 = (type_session *)tc->party.mem3;
+                        if(mc2 == c) {
+                            thr_party_set(mc2);
+                            tc->party.ison1 = 0;
+                            tc->party.cnt=2;
+                            tc->party.mem2 = NULL;
+                            tc->party.ison2 = 0;
+                        } else {
+                            thr_party_set(c);
+                            pthread_mutex_unlock(&synclock);
+                            return;
+                        }
+                    }
+                }
+                if(mc1&&mc1!=c) map_pData_snd(mc1, msg, pLen);
+                if(mc2&&mc2!=c) map_pData_snd(mc2, msg, pLen);
+                map_pData_snd(tc, msg, pLen); 
+
+            }
+        }
+    }
+}

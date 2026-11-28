@@ -65,6 +65,10 @@ typedef struct npcmapsys
 }
 type_npcmap;
 
+void * voidnpclist_get_first(type_objlist const * const * * save,unsigned short i, unsigned short j);
+void * voidnpclist_get_next(type_objlist const * const * * save);
+
+
 void npc_set_def(char div, short no, char gtype, char level, char speed);
 void npc_set(char div, short no, char x, char y);
 

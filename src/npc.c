@@ -754,5 +754,161 @@ extern int npc_dist_chk(type_session *c){
 
 extern void npc_skill_1(void * chr,unsigned short pwr, unsigned short xx, unsigned short yy,char * gDat,void * conn)
 {
-    
+    int i,j,x,y,Ax,Ay;
+    type_objlist const* const* tmp_objlist;
+    void *ntmp_npc;
+    type_npc *tmp_npc;
+    short Len=1, dist, cnt=0, range=4, wasLVup=0, rLen, exp=0, coin=0, result=0;
+    char mesg[32];
+    type_session *c, *pc, *mc;
+    unsigned short nEnd = PEND;
+    int pt1=0, pt2=0, pt0=0;
+
+    c=(type_session *)chr;
+
+    Ax = xx/S_UNITSIZE;
+    Ay = yy/S_UNITSIZE;
+    if(Ax>=32||Ay>=32) return;
+
+    pthread_mutex_lock(&npclock);
+    for(i=3;i>0;i--){
+        x = Ax -i+2;
+        if(x<0 || x>S_WIDTH-1) continue;
+
+        for(j=3;j>0;j--) {
+            y = Ay -j + 2;
+            if(y<0 || y>S_WIDTH-1) continue;
+            for(tmp_npc=voidnpclist_get_first(&tmp_objlist, x, y);
+                tmp_npc; tmp_npc=ntmp_npc){
+                ntmp_npc=voidnpclist_get_next(&tmp_objlist);
+                if(tmp_npc->div==1) continue;
+                if(tmp_npc->status==S_DIE) continue;
+                dist = npc_ret_dist(xx, yy, tmp_npc->npc_id);
+                if(range>=dist && dist != -1) {
+                    cnt+=1;
+                    gDat[Len]=2;
+                    Len+=1;
+                    memcpy(&gDat[Len], &tmp_npc->npc_id, 2);
+                    Len+=2;
+                    tmp_npc->HP-=pwr;
+                    if(tmp_npc->HP <= 0) {
+                        result=1;
+                        tmp_npc->HP=0;
+                        tmp_npc->targetNO = 0;
+                        tmp_npc->targetChr = NULL;
+                        tmp_npc->status = S_DIE;
+                        coin += tmp_npc->level * 10;
+                        exp += tmp_npc->EXP;
+                    } else {
+                        tmp_npc->targetNO = c->userNo;
+                        tmp_npc->targetChr = c;
+                        tmp_npc->mvstatus=0;
+                        tmp_npc->status = S_FIGHT;
+                    }
+                    memcpy(&gDat[Len], &tmp_npc->HP, 2);
+                    Len+=2;
+                }
+            }
+        }
+    }
+    pthread_mutex_unlock(&npclock);
+
+    if(c->party.flag==1) {
+        if(c->party.ison1==2) {
+            coin = coin/c->party.cnt;
+            exp = exp/c->party.cnt;
+            mc=c;
+        } else {
+            mc=(type_session *)c->party.master;
+            if(mc==NULL) return;
+            coin = coin/mc->party.cnt;
+            exp = exp/mc->party.cnt;
+        }
+        pthread_mutex_lock(&synclock);
+        mc->coin+=coin;
+        mc->exp+=exp;
+        pt0=db_chk_lvup(mc, conn);
+
+        if(mc->party.ison2==1){
+            pc=(type_session *)mc->party.mem2;
+            if(pc==NULL) return;
+            pc->coin+=coin;
+            pc->exp+=exp;
+            pt1=db_chk_lvup(pc, conn);
+        }
+        if(mc->party.ison3 == 1){
+            pc=(type_session *)mc->party.mem3;
+            if(pc==NULL) return;
+            pc->coin+=coin;
+            pc->exp+=exp;
+            pt2=db_chk_lvup(pc, conn);
+        }
+        pthread_mutex_unlock(&synclock);
+
+        if(pt0==1) {
+            rLen = 2;
+            mesg[rLen] = PK_LEVELUP;
+            rLen+=1;
+            mesg[rLen] = mc->level;
+            rLen+=1;
+            memcpy(&mesg[rLen], &nEnd, 2);
+            rLen+=2;
+            memcpy(&mesg[0], &rLen, 2);
+            map_pData_snd(mc, mesg, rLen);
+        }
+
+        if(pt1==1){
+            pc=(type_session *)mc->party.mem2;
+            if(pc==NULL) return;
+            rLen = 2;
+            mesg[rLen] = PK_LEVELUP;
+            rLen+=1;
+            mesg[rLen] = pc->level;
+            rLen+=1;
+            memcpy(&mesg[rLen], &nEnd, 2);
+            rLen+=2;
+            memcpy(&mesg[0], &rLen, 2);
+            map_pData_snd(pc, mesg, rLen);
+        }
+        if(pt2==1) {
+            pc=(type_session *)mc->party.mem3;
+            if(pc==NULL) return;
+            rLen = 2;
+            mesg[rLen] = PK_LEVELUP;
+            rLen+=1;
+            mesg[rLen] = pc->level;
+            rLen+=1;
+            memcpy(&mesg[rLen], &nEnd, 2);
+            rLen+=2;
+            memcpy(&mesg[0], &rLen, 2);
+            map_pData_snd(pc, mesg, rLen);
+        }
+    } else {
+        pthread_mutex_lock(&synclock);
+        c->coin+=coin;
+        c->exp+=exp;
+        wasLVup = db_chk_lvup(c, conn);
+        pthread_mutex_unlock(&synclock);
+
+        if(wasLVup==1) {
+            rLen = 2;
+            mesg[rLen] = PK_LEVELUP;
+            rLen+=1;
+            mesg[rLen] = c->level;
+            rLen+=1;
+            memcpy(&mesg[rLen], &nEnd, 2);
+            rLen+=2;
+            memcpy(&mesg[0], &rLen, 2);
+            map_pData_snd(c, mesg, rLen);
+        }
+    }
+    gDat[0]=cnt;
+}
+
+extern void * voidnpclist_get_first(type_objlist const * const * * save,unsigned short i, unsigned short j){
+    return NULL;
+}
+
+extern void * voidnpclist_get_next(type_objlist const * const * * save){
+    return NULL;
 }

@@ -1191,3 +1191,48 @@ static void thr_map_move_req(type_session *c, char *dat, int udpsock){
         map_pData_snd(c, msg, Len);
     }
 }
+
+extern void thr_map_move_key_ok(char *dat, void *conn){
+    //옮길 서버로부터 ok 패킷을 받았을때
+    unsigned char gidx=0, res=0;
+    type_session *c;
+    char svrip[4];
+    short Len=2, svrport;
+    char msg[MAX_PACKET_SIZE];
+    unsigned short userNo;
+    unsigned short nEnd = PEND;
+
+    gidx=dat[3];
+    memcpy(&userNo, &dat[4], 2);
+    c=session_ret_session(userNo);
+    if(c==NULL) return;
+    else if(c->userNo != userNo) res=3;
+    else {
+        memcpy(svrip, db_ret_tcpip(gidx), 4);
+        svrport = db_ret_tcpport(gidx);
+        if(svrport==-1)res=4;
+    }
+    msg[Len]=PK_MAP_MOVE_REQ;
+    Len+=1;
+    msg[Len]=res;
+    Len+=1;
+
+    if(res==0) {
+        res=db_save_all(c,conn);
+        c->dbLoaded=0;
+        c->state=conn_state_empty;
+
+        memcpy(&msg[Len], &dat[6], 4);
+        Len+=4;
+        memcpy(&msg[Len], &svrip[0], 4);
+        Len+=4;
+        memcpy(&msg[Len], &svrport, 2);
+        Len+=2;
+        msg[Len]=gidx;
+        Len+=1;
+    } else if(res==3) return;
+    memcpy(&msg[Len], &nEnd, 2);
+    Len+=2;
+    memcpy(&msg[0], &Len, 2);
+    map_pData_snd(c, msg, Len);
+}

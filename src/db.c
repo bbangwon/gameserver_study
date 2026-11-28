@@ -402,3 +402,12 @@ extern type_sockadr * db_ret_udpsock(int idx){
 extern int db_ret_udpLen(int idx){
     return 0;
 }
+extern char * db_ret_tcpip(int idx){
+    return NULL;
+}
+extern short db_ret_tcpport(int idx){
+    return -1;
+}
+extern short db_save_all(void * chrr,void * conns){
+    return 0;
+}

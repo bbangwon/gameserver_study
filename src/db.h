@@ -13,3 +13,7 @@ int db_chk_lvup(void * cc,void * con);
 
 type_sockadr * db_ret_udpsock(int idx);
 int db_ret_udpLen(int idx);
+
+char * db_ret_tcpip(int idx);
+short db_ret_tcpport(int idx);
+short db_save_all(void * chrr,void * conns);

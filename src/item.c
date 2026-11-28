@@ -808,3 +808,107 @@ extern short item_trade_req(void * chr,char * msg){
     }
     return 1;
 }
+
+extern short item_trade_req_ok(void * chr, char * msg){
+    type_session *c;
+    type_session *tc;
+    int res=0, i;
+    short dLen=2, dist=0;
+    char data[32];
+    unsigned short nEnd=PEND;
+    unsigned short userNo;
+
+    c=(type_session *)chr;
+    memcpy(&userNo, &msg[4], 2);
+    tc=session_ret_session(userNo);
+    if(tc==NULL) res=1;
+    else {
+        dist=map_ret_dist(c->Cx, c->Cy, tc->Cx, tc->Cy);
+        if(dist>15) res=2;
+    }
+    if(res==0&&msg[3]==0){
+        if(c->trade.flag==0&&c==tc->trade.tg) {
+            pthread_mutex_lock(&synclock);
+            c->trade.flag=1;
+            c->trade.confirm=0;
+            c->trade.tg=tc;
+            c->trade.coin=-0;
+            for(i=0;i<2;i++) {
+                c->trade.itemidx[i]=0;
+            }
+            pthread_mutex_unlock(&synclock);
+        } else res=4;
+    }
+
+    data[dLen] = PK_TRADE_REQ_OK;
+    dLen+=1;
+    data[dLen]=msg[3];
+    dLen+=1;
+    memcpy(&data[dLen], &c->userNo, 2);
+    dLen+=2;
+    memcpy(&data[dLen], &nEnd, 2);
+    dLen+=2;
+    memcpy(&data[0], &dLen, 2);
+    map_pData_snd(c, data, dLen);
+    return 1;
+}
+
+extern short item_trade_list(void * chr, char * msg){
+    type_session *c;
+    int res=0, i, tmp;
+    short dLen=2;
+    char data[32];
+    unsigned char cnt=0;
+    unsigned short nEnd=PEND;
+
+    c=(type_session *)chr;
+    memcpy(&c->trade.coin, &msg[4], 2);
+    cnt=msg[4];
+
+    if(c->trade.flag!=1)  res=1;
+    else if(cnt==0||cnt>2) res=2;
+    pthread_mutex_lock(&synclock);
+    if(c->trade.confirm==1) res=3;
+    
+    for(i=0;i<cnt;i++) {
+        c->trade.invidx[i]=msg[i*2+5];
+        tmp=c->trade.invidx[i];
+        if(c->inven[tmp]==0){
+            res=4;
+            break;
+        }
+        c->trade.itemidx[i]=c->inven[tmp];
+        c->trade.cnt[i]=msg[i*2+6];
+        if(c->trade.cnt[i]>c->inven_cnt[tmp]){
+            res=5;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&synclock);
+
+    data[dLen] = PK_TRADE_LIST;
+    dLen+=1;
+    data[dLen] = res;
+    dLen+=1;
+    memcpy(&data[dLen], &c->userNo, 2);
+    dLen+=2;
+    memcpy(&data[dLen], &c->trade.coin, 4);
+    dLen+=4;
+    data[dLen]=cnt;
+    dLen+=1;
+    for(i=0;i<cnt;i++){
+        data[dLen]=c->trade.cnt[i];
+        dLen+=1;
+        data[dLen]=c->trade.invidx[i];
+        dLen+=1;
+        memcpy(&data[dLen], &c->trade.itemidx, 2);
+        dLen+=2;
+    }
+    memcpy(&data[dLen], &nEnd, 2);
+    dLen+=2;
+    memcpy(&data[0], &dLen, 2);
+    map_pData_snd(c, data, dLen);
+
+    if(res==0) map_pData_snd(c->trade.tg, data, dLen); //성공이면 타겟유저에게도 전송
+    return 1;
+}

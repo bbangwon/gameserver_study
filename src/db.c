@@ -143,16 +143,13 @@ extern void db_load_expList(void *con)
 
 extern void db_load_skillList(void *con)
 {
-    int sktype, coin, skidx, i;
+    int sktype, coin, skidx, rows, i;
     char *lvpwr, *lvupcost;
     PGconn *conn;
     PGresult *result;
     char query[256];
-    int rows;
-
 
     conn = (PGconn *)con;
-    item_init();
     memset(query, 0, 256);
     sprintf(query, "SELECT * FROM skilldef");
 

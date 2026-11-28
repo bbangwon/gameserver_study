@@ -59,7 +59,9 @@ enum {
    PK_TRADE_LIST,
    PK_TRADE_SUCC,
    PK_TRADE_OK,
-   PK_TRADE_CANCEL
+   PK_TRADE_CANCEL,
+   PK_SKILL_GET,
+   PK_SKILL_LVUP
 };
 
 /*obj type

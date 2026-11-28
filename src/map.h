@@ -23,3 +23,4 @@ short map_ret_dist(unsigned short x, unsigned short y, unsigned short xx, unsign
 short map_ret_chrdist(unsigned short x, unsigned short y,unsigned short idx);
 void * map_ret_Activ_tg(unsigned short npcx, unsigned short npcy,unsigned short sight);
 type_session * map_ret_chr(unsigned short Ax,unsigned short Ay,unsigned short tidx);
+void map_party_sendAll(void * chrr,char * data,int len);

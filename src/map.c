@@ -554,3 +554,6 @@ extern short map_ret_chrdist(unsigned short x, unsigned short y,unsigned short i
 extern type_session * map_ret_chr(unsigned short Ax,unsigned short Ay,unsigned short tidx){
     return NULL;
 }
+
+extern void map_party_sendAll(void * chrr,char * data,int len){
+}

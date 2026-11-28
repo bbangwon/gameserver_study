@@ -86,7 +86,97 @@ static void thr_skillinfo(type_session *c) {
 
 extern void thr_party_info(type_session * c)
 {
+    type_session *mc = NULL;
 
+    unsigned short nEnd = PEND;
+    short pLen =2, res = 0;
+    char msg[MAX_PACKET_SIZE];
+
+    msg[pLen] = PK_PT_INFO;
+    pLen+=1;
+    msg[pLen] = res;
+    pLen +=1;
+    if(c->party.cnt==3) {
+        mc=(type_session *)c->party.mem2;
+        if(mc!=NULL) {
+            memcpy(&msg[pLen], &mc->userNo, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->hp_m, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->hp_c, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->Cx, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->Cy, 2);
+            pLen += 2;
+        } else res=1;
+        mc=(type_session *)c->party.mem3;
+        if(mc!=NULL) {
+            memcpy(&msg[pLen], &mc->userNo, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->hp_m, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->hp_c, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->Cx, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->Cy, 2);
+            pLen += 2;
+        } else res=2;
+    } else if(c->party.cnt==2) {
+        mc=(type_session *)c->party.mem2;
+        if(mc!=NULL) {
+            memcpy(&msg[pLen], &mc->userNo, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->hp_m, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->hp_c, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->Cx, 2);
+            pLen += 2;
+            memcpy(&msg[pLen], &mc->Cy, 2);
+            pLen += 2;
+        } else {
+            mc=(type_session *)c->party.mem3;
+            if(mc==NULL){
+                res=3;
+            }else{
+                memcpy(&msg[pLen], &mc->userNo, 2);
+                pLen += 2;
+                memcpy(&msg[pLen], &mc->hp_m, 2);
+                pLen += 2;
+                memcpy(&msg[pLen], &mc->hp_c, 2);
+                pLen += 2;
+                memcpy(&msg[pLen], &mc->Cx, 2);
+                pLen += 2;
+                memcpy(&msg[pLen], &mc->Cy, 2);
+                pLen += 2;
+            }
+        }
+    } else res=4;
+
+    if(res==0) {
+        memcpy(&msg[pLen], &c->userNo, 2);
+        pLen += 2;
+        memcpy(&msg[pLen], &c->hp_m, 2);
+        pLen += 2;
+        memcpy(&msg[pLen], &c->hp_c, 2);
+        pLen += 2;
+        memcpy(&msg[pLen], &c->Cx, 2);
+        pLen += 2;
+        memcpy(&msg[pLen], &c->Cy, 2);
+        pLen += 2;
+        memcpy(&msg[pLen], &nEnd, 2);
+        pLen += 2;
+        memcpy(&msg[0], &pLen, 2);
+        map_party_sendAll(c, msg, pLen);
+    } else {
+        msg[3]=res;
+        memcpy(&msg[pLen], &nEnd, 2);
+        pLen += 2;
+        memcpy(&msg[0], &pLen, 2);
+        map_party_sendAll(c, msg, pLen);
+    }
 }
 
 extern int thr_beforeAuth(char *dat, type_session *c, void *conn, int udpsock) {

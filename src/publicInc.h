@@ -96,6 +96,7 @@ extern pthread_mutex_t 		synclock;
 extern pthread_cond_t		synccond;
 extern pthread_mutex_t 		npclock;
 extern pthread_mutex_t 		itemlock;
+extern pthread_mutex_t keyLock;
 
 #define AFRAME	900000/GAME_FRAME
 #define _ONE_SEC	GAME_FRAME

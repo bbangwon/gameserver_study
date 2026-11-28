@@ -8,6 +8,17 @@ typedef enum
     conn_state_destroy
 } type_conn_state;
  
+typedef struct key
+{
+	char 				userid[21];
+	int				Len;
+	short				flag;
+	int				key;
+	int				rmCnt;
+	unsigned short	svridx;
+}
+type_key;
+
 typedef struct connection {
     char userid[32]; //유저 아이디
     char char_name[32]; //캐릭터 이름
@@ -45,3 +56,5 @@ type_session* ret_session_next(unsigned int max);
 type_session* session_create(int sock, unsigned int addr, unsigned short port);
 void session_clear(type_session  * c);
 int session_set_userid(type_session *c, char *msg, int len);
+
+int session_keynode_create(char * data, unsigned short svridx);

@@ -33,6 +33,7 @@ pthread_mutex_t synclock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t	synccond	= PTHREAD_COND_INITIALIZER;
 pthread_mutex_t sendQuelock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t	sendQuecond	= PTHREAD_COND_INITIALIZER;
+pthread_mutex_t keyLock = PTHREAD_MUTEX_INITIALIZER;
 
 int main() {
     int tcpsock, udpsock, tresult;
@@ -397,7 +398,18 @@ void * Thread_sendpack(void *arg)
 
 void * Thread_udpserv(void *arg)
 {
-
+    int udpsock,n,fromIDX,res;
+    char msg[1024];
+    short pLen;
+    char temp;
+    switch(temp){
+        case PKU_MAP_KEY:
+            pthread_mutex_lock(&keyLock);
+            res = session_keynode_create(msg, fromIDX);
+            pthread_mutex_unlock(&keyLock);
+            if(res==1) svr_send_Ack_key(udpsock, msg, pLen, fromIDX);
+            break;
+    }
 }
 
 void setup_signals()

@@ -39,6 +39,8 @@ extern int svr_ret_tot()
     return tUsercnt;
 }
 
+static void svr_send_Ack_key(int sockno,char * dat,short Len, int toidx){}
+
 
 void * Thread_recvpack(void *arg)
 {

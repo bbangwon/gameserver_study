@@ -7,6 +7,7 @@
 #include "publicInc.h"
 
 
+static type_key key_array[2048];
 static t_sessionArray sess_array[MAXUSERNUM];
 static volatile int sockTosess[MAXUSERNUM];
 
@@ -127,6 +128,37 @@ extern int session_set_userid(type_session *c, char *msg, int len) {
       c->userid[len] = '\0';
       c->uLen = len;
       return 1;
+}
+
+extern int session_keynode_create(char * data, unsigned short svridx) {
+    int cLen, i, aidx=-1;
+    int dLen=10;
+
+    cLen = data[dLen];
+    dLen += 1;
+    if(cLen <= 0 || cLen > 31){
+        printf("INVALID USERID LENGTH\n");
+        return 0;
+    }
+
+    for(i=0;i<2048;i++)
+    {
+        if(key_array[i].flag == 0){
+            aidx = i;
+            key_array[i].flag=1;
+            break;
+        }
+    }
+    if(aidx==-1) return 0;
+
+    memcpy(&key_array[aidx].userid[0], &data[dLen], cLen);
+    key_array[aidx].userid[cLen] = '\0';
+    key_array[aidx].Len = cLen;
+    key_array[aidx].rmCnt = 0;
+    memcpy(&key_array[aidx].key, &data[6], 4);
+    key_array[aidx].svridx = svridx;
+  
+    return 1;
 }
 
 
